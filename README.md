@@ -10,9 +10,9 @@
 
 2. **Install Dependencies**
    ```bash
-  npm install
-  npm install lucide-react
-  npm run dev
+   npm install
+   npm install lucide-react
+   npm run dev
    ```
 
 3. **Set Up Environment Variables** (working on🚧)  
