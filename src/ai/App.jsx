@@ -5,6 +5,8 @@ import PromptForm from "../components/PromptForm";
 import Sidebar from "../components/Sidebar";
 import LoginPage from "../authentication/LoginPage";
 import SignupPage from "../authentication/SignupPage";
+import Student from "../dashboards/Student";
+
 import { Menu } from "lucide-react";
 
 const AppContent = () => {
@@ -197,6 +199,7 @@ const App = () => {
         <Route path="/" element={<AppContent />} /> {/* Default route - Chat interface */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/dashboards/Student" element={<Student />} />
         {/* You can add a redirect for the root path if you want to start at login */}
         {/* <Route path="/" element={<Navigate to="/login" />} /> */}
       </Routes>
