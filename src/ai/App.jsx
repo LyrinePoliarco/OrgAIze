@@ -6,6 +6,9 @@ import Sidebar from "../components/Sidebar";
 import LoginPage from "../authentication/LoginPage";
 import SignupPage from "../authentication/SignupPage";
 import Student from "../dashboards/Student";
+import AcssOrgChart from "../dashboards/AcssOrgChart";
+import Acss from "../dashboards/Acss";
+import AcssStudent from "../dashboards/AcssStudent";
 
 import { Menu } from "lucide-react";
 
@@ -200,6 +203,9 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/dashboards/Student" element={<Student />} />
+        <Route path="/dashboards/AcssOrgChart" element={<AcssOrgChart />} />
+        <Route path="/dashboards/Acss" element={<Acss />} />
+        <Route path="/dashboards/AcssStudent" element={<AcssStudent />} />
         {/* You can add a redirect for the root path if you want to start at login */}
         {/* <Route path="/" element={<Navigate to="/login" />} /> */}
       </Routes>
