@@ -1,14 +1,401 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/neu.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEU orgAIze</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/ai/main.jsx"></script>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/neu.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEU orgAIze</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
     
-  </body>
+    .container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .content-section {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    
+    .section-title {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .route-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      gap: 10px;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .primary-button {
+      background-color: #c41230; /* NEU Red */
+      color: white;
+    }
+    
+    .primary-button:hover {
+      background-color: #a50f28;
+    }
+    
+    .route-button-text {
+      font-size: 16px;
+      color: inherit;
+    }
+    
+    .button-icon {
+      font-size: 20px;
+    }
+    
+    .neu-logo {
+      width: 120px;
+      margin-bottom: 20px;
+    }
+
+    /* Auth Container Styles */
+    .auth-container {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .auth-container.active {
+      display: flex;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .auth-form input {
+      padding: 14px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+
+    .auth-form input:focus {
+      outline: none;
+      border-color: #c41230;
+    }
+
+    .auth-form button {
+      padding: 14px;
+      border-radius: 6px;
+      background-color: #c41230;
+      color: white;
+      border: none;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .auth-form button:hover {
+      background-color: #a50f28;
+    }
+
+    .error-message {
+      color: #c41230;
+      font-size: 14px;
+      text-align: left;
+      min-height: 20px;
+    }
+
+    .auth-toggle {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .auth-toggle span {
+      color: #c41230;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .auth-toggle span:hover {
+      text-decoration: underline;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+    }
+
+    .back-button:hover {
+      color: #c41230;
+    }
+
+    #main-view, #login-container, #signup-container {
+      width: 100%;
+    }
+
+    /* Loading indicator for authentication */
+    .loading-spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      margin: 10px auto;
+      border: 4px solid rgba(196, 18, 48, 0.2);
+      border-top: 4px solid #c41230;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css" rel="stylesheet">
+</head>
+<body>
+  <div id="auth-wrapper">
+    <div class="container">
+      <img src="/neu.png" alt="Northeastern University Logo" class="neu-logo">
+      
+      <!-- Main Selection View -->
+      <div id="main-view" class="content-section active">
+        <h1 class="section-title">Select Login Type</h1>
+        
+        <div class="button-group">
+          <button id="show-login-form" class="route-button primary-button">
+            <i class="icon ion-md-log-in button-icon"></i>
+            <span class="route-button-text">Log In</span>
+          </button>
+        </div>
+        
+        <div class="button-group">
+          <button id="show-signup-form" class="route-button primary-button">
+            <i class="icon ion-md-person-add button-icon"></i>
+            <span class="route-button-text">Sign Up</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Login View -->
+      <div id="login-container" class="auth-container">
+        <button class="back-button" id="back-from-login">
+          <i class="icon ion-md-arrow-back"></i> Back
+        </button>
+        <h2>Login to NEU orgAIze</h2>
+        <form id="login-form" class="auth-form">
+          <input type="email" id="login-email" placeholder="Email" required>
+          <input type="password" id="login-password" placeholder="Password" required>
+          <button type="submit">Login</button>
+          <div id="login-error" class="error-message"></div>
+          <div id="login-spinner" class="loading-spinner"></div>
+        </form>
+        <div class="auth-toggle">
+          Don't have an account? <span id="switch-to-signup">Sign up</span>
+        </div>
+      </div>
+      
+      <!-- Sign Up View -->
+      <div id="signup-container" class="auth-container">
+        <button class="back-button" id="back-from-signup">
+          <i class="icon ion-md-arrow-back"></i> Back
+        </button>
+        <h2>Create an Account</h2>
+        <form id="signup-form" class="auth-form">
+          <input type="email" id="signup-email" placeholder="Email" required>
+          <input type="password" id="signup-password" placeholder="Password" required>
+          <button type="submit">Sign Up</button>
+          <div id="signup-error" class="error-message"></div>
+          <div id="signup-spinner" class="loading-spinner"></div>
+        </form>
+        <div class="auth-toggle">
+          Already have an account? <span id="switch-to-login">Login</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Root element for React app -->
+  <div id="root" style="display: none;"></div>
+  
+  <script>
+    // DOM Elements
+    const mainView = document.getElementById('main-view');
+    const loginContainer = document.getElementById('login-container');
+    const signupContainer = document.getElementById('signup-container');
+    const authWrapper = document.getElementById('auth-wrapper');
+    const rootElement = document.getElementById('root');
+    
+    // Show Login Form
+    document.getElementById('show-login-form').addEventListener('click', () => {
+      mainView.style.display = 'none';
+      loginContainer.style.display = 'flex';
+      signupContainer.style.display = 'none';
+    });
+    
+    // Show Signup Form
+    document.getElementById('show-signup-form').addEventListener('click', () => {
+      mainView.style.display = 'none';
+      loginContainer.style.display = 'none';
+      signupContainer.style.display = 'flex';
+    });
+    
+    // Back buttons
+    document.getElementById('back-from-login').addEventListener('click', () => {
+      mainView.style.display = 'flex';
+      loginContainer.style.display = 'none';
+    });
+    
+    document.getElementById('back-from-signup').addEventListener('click', () => {
+      mainView.style.display = 'flex';
+      signupContainer.style.display = 'none';
+    });
+    
+    // Switch between login and signup
+    document.getElementById('switch-to-signup').addEventListener('click', () => {
+      loginContainer.style.display = 'none';
+      signupContainer.style.display = 'flex';
+    });
+    
+    document.getElementById('switch-to-login').addEventListener('click', () => {
+      signupContainer.style.display = 'none';
+      loginContainer.style.display = 'flex';
+    });
+    
+    // Launch React app and hide authentication
+    function launchReactApp(userData) {
+      // Hide authentication UI
+      authWrapper.style.display = 'none';
+      
+      // Show React app container
+      rootElement.style.display = 'block';
+      
+      // Store user data in localStorage for React app to access
+      localStorage.setItem('userData', JSON.stringify(userData));
+      
+      // Load React app script
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/ai/main.jsx';
+      document.body.appendChild(script);
+      
+      console.log('React app launched with user:', userData);
+    }
+    
+    // Form submission
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      
+      // Show loading spinner
+      const spinner = document.getElementById('login-spinner');
+      spinner.style.display = 'block';
+      
+      // Example validation
+      if (email && password) {
+        // Simulate authentication delay
+        setTimeout(() => {
+          // Hide spinner
+          spinner.style.display = 'none';
+          
+          // For demo purposes - in a real app, this would verify credentials against a backend
+          const userData = {
+            email: email,
+            name: email.split('@')[0], // Using part of email as name for demo
+            isAuthenticated: true,
+            loginTime: new Date().toISOString()
+          };
+          
+          // Launch React app with user data
+          launchReactApp(userData);
+          
+        }, 1500); // Simulate network delay
+      } else {
+        spinner.style.display = 'none';
+        document.getElementById('login-error').textContent = 'Please enter both email and password';
+      }
+    });
+    
+    document.getElementById('signup-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      
+      // Show loading spinner
+      const spinner = document.getElementById('signup-spinner');
+      spinner.style.display = 'block';
+      
+      // Example validation
+      if (email && password) {
+        if (password.length < 6) {
+          spinner.style.display = 'none';
+          document.getElementById('signup-error').textContent = 'Password must be at least 6 characters';
+        } else {
+          // Simulate authentication delay
+          setTimeout(() => {
+            // Hide spinner
+            spinner.style.display = 'none';
+            
+            // For demo purposes - in a real app, this would create an account in a backend
+            const userData = {
+              email: email,
+              name: email.split('@')[0], // Using part of email as name for demo
+              isAuthenticated: true,
+              isNewUser: true,
+              signupTime: new Date().toISOString()
+            };
+            
+            // Launch React app with user data
+            launchReactApp(userData);
+            
+          }, 1500); // Simulate network delay
+        }
+      } else {
+        spinner.style.display = 'none';
+        document.getElementById('signup-error').textContent = 'Please enter both email and password';
+      }
+    });
+  </script>
+</body>
 </html>

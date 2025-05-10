@@ -1,5 +1,17 @@
-import { Menu, Moon, Plus, Sparkles, Sun, Trash2 } from "lucide-react";
-const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, conversations, setConversations, activeConversation, setActiveConversation, theme, setTheme }) => {
+import { LogOut, Menu, Moon, Plus, Sparkles, Sun, Trash2, User } from "lucide-react";
+
+const Sidebar = ({ 
+  isSidebarOpen, 
+  setIsSidebarOpen, 
+  conversations, 
+  setConversations, 
+  activeConversation, 
+  setActiveConversation, 
+  theme, 
+  setTheme,
+  userData,
+  onLogout
+}) => {
   // Create new conversation
   const createNewConversation = () => {
     // Check if any existing conversation is empty
@@ -14,6 +26,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, conversations, setConversati
     setConversations([{ id: newId, title: "New Chat", messages: [] }, ...conversations]);
     setActiveConversation(newId);
   };
+
   // Delete conversation and handle active selection
   const deleteConversation = (id, e) => {
     e.stopPropagation(); // Prevent triggering conversation selection
@@ -35,6 +48,30 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, conversations, setConversati
       }
     }
   };
+
+  // Handle logout
+  const handleLogout = () => {
+    if (typeof onLogout === 'function') {
+      onLogout();
+    }
+  };
+
+  // Get user's display name
+  const getUserDisplayName = () => {
+    if (!userData) return 'User';
+    
+    // If name is available, use it
+    if (userData.name) return userData.name;
+    
+    // Otherwise use email (without domain)
+    if (userData.email) {
+      const emailParts = userData.email.split('@');
+      return emailParts[0];
+    }
+    
+    return 'User';
+  };
+
   return (
     <aside className={`sidebar ${isSidebarOpen ? "open" : "closed"}`}>
       {/* Sidebar Header */}
@@ -47,12 +84,28 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, conversations, setConversati
           <span>New chat</span>
         </button>
       </div>
+
+      {/* User Profile */}
+      <div className="user-profile">
+        <div className="profile-avatar">
+          <User size={24} />
+        </div>
+        <div className="profile-info">
+          <div className="profile-name">{getUserDisplayName()}</div>
+          <div className="profile-email">{userData?.email || 'User'}</div>
+        </div>
+      </div>
+
       {/* Conversation List */}
       <div className="sidebar-content">
         <h2 className="sidebar-title">Chat history</h2>
         <ul className="conversation-list">
           {conversations.map((conv) => (
-            <li key={conv.id} className={`conversation-item ${activeConversation === conv.id ? "active" : ""}`} onClick={() => setActiveConversation(conv.id)}>
+            <li 
+              key={conv.id} 
+              className={`conversation-item ${activeConversation === conv.id ? "active" : ""}`} 
+              onClick={() => setActiveConversation(conv.id)}
+            >
               <div className="conversation-icon-title">
                 <div className="conversation-icon">
                   <Sparkles size={14} />
@@ -60,15 +113,20 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, conversations, setConversati
                 <span className="conversation-title">{conv.title}</span>
               </div>
               {/* Only show delete button if more than one chat or not a new chat */}
-              <button className={`delete-btn ${conversations.length > 1 || conv.title !== "New Chat" ? "" : "hide"}`} onClick={(e) => deleteConversation(conv.id, e)}>
+              <button 
+                className={`delete-btn ${conversations.length > 1 || conv.title !== "New Chat" ? "" : "hide"}`} 
+                onClick={(e) => deleteConversation(conv.id, e)}
+              >
                 <Trash2 size={16} />
               </button>
             </li>
           ))}
         </ul>
       </div>
-      {/* Theme Toggle */}
+
+      {/* Sidebar Footer */}
       <div className="sidebar-footer">
+        {/* Theme Toggle */}
         <button className="theme-toggle" onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
           {theme === "light" ? (
             <>
@@ -82,8 +140,15 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, conversations, setConversati
             </>
           )}
         </button>
+
+        {/* Logout Button */}
+        <button className="logout-btn" onClick={handleLogout}>
+          <LogOut size={20} />
+          <span>Log out</span>
+        </button>
       </div>
     </aside>
   );
 };
+
 export default Sidebar;
