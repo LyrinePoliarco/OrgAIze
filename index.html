@@ -249,23 +249,16 @@
             <i class="icon ion-logo-google"></i>
             <span>Continue with Google</span>
           </button>
-          <button id="microsoft-login" class="oauth-button">
-            <i class="icon ion-logo-windows"></i>
-            <span>Continue with Microsoft</span>
-          </button>
         </div>
         
-        <div class="divider">or</div>
+        <!-- Loading spinner for login -->
+        <div id="login-spinner" class="loading-spinner"></div>
+        <!-- Error message for login -->
+        <div id="login-error" class="error-message"></div>
         
-        <form id="login-form" class="auth-form">
-          <input type="email" id="login-email" placeholder="Email" required>
-          <input type="password" id="login-password" placeholder="Password" required>
-          <button type="submit">Login</button>
-          <div id="login-error" class="error-message"></div>
-          <div id="login-spinner" class="loading-spinner"></div>
-        </form>
+        <!-- Link to signup form -->
         <div class="auth-toggle">
-          Don't have an account? <span id="switch-to-signup">Sign up</span>
+          Don't have an account? <span id="show-signup">Sign up</span>
         </div>
       </div>
       
@@ -274,6 +267,7 @@
         <button class="back-button" id="back-from-signup">
           <i class="icon ion-md-arrow-back"></i> Back
         </button>
+        
         <h2>Create an Account</h2>
         
         <!-- OAuth Signup Buttons -->
@@ -282,24 +276,12 @@
             <i class="icon ion-logo-google"></i>
             <span>Sign up with Google</span>
           </button>
-          <button id="microsoft-signup" class="oauth-button">
-            <i class="icon ion-logo-windows"></i>
-            <span>Sign up with Microsoft</span>
-          </button>
         </div>
         
-        <div class="divider">or</div>
-        
-        <form id="signup-form" class="auth-form">
-          <input type="email" id="signup-email" placeholder="Email" required>
-          <input type="password" id="signup-password" placeholder="Password" required>
-          <button type="submit">Sign Up</button>
-          <div id="signup-error" class="error-message"></div>
-          <div id="signup-spinner" class="loading-spinner"></div>
-        </form>
-        <div class="auth-toggle">
-          Already have an account? <span id="switch-to-login">Login</span>
-        </div>
+        <!-- Loading spinner for signup -->
+        <div id="signup-spinner" class="loading-spinner"></div>
+        <!-- Error message for signup -->
+        <div id="signup-error" class="error-message"></div>
       </div>
     </div>
   </div>
@@ -319,6 +301,17 @@
     const signupContainer = document.getElementById('signup-container');
     const authWrapper = document.getElementById('auth-wrapper');
     const rootElement = document.getElementById('root');
+    
+    // Toggle between login and signup views
+    document.getElementById('show-signup')?.addEventListener('click', () => {
+      loginContainer.style.display = 'none';
+      signupContainer.style.display = 'flex';
+    });
+    
+    document.getElementById('back-from-signup')?.addEventListener('click', () => {
+      signupContainer.style.display = 'none';
+      loginContainer.style.display = 'flex';
+    });
     
     // Check for OAuth callback and existing session on page load
     window.addEventListener('DOMContentLoaded', async () => {
@@ -374,40 +367,26 @@
             loginTime: new Date().toISOString()
           };
           
-          launchReactApp(userData);
+          // launchReactApp(userData);
         }
       } catch (error) {
         console.error('Error during auth initialization:', error);
       }
     });
     
-    // Switch between login and signup
-    document.getElementById('switch-to-signup').addEventListener('click', () => {
-      loginContainer.style.display = 'none';
-      signupContainer.style.display = 'flex';
-    });
-    
-    document.getElementById('switch-to-login').addEventListener('click', () => {
-      signupContainer.style.display = 'none';
-      loginContainer.style.display = 'flex';
-    });
-    
-    // Back button from signup to login
-    document.getElementById('back-from-signup').addEventListener('click', () => {
-      loginContainer.style.display = 'flex';
-      signupContainer.style.display = 'none';
-    });
-    
-    // OAuth Login Handlers
+    // OAuth Login Handler
     document.getElementById('google-login').addEventListener('click', async () => {
       try {
-        document.getElementById('login-spinner').style.display = 'block';
-        document.getElementById('login-error').textContent = '';
+        const loginSpinner = document.getElementById('login-spinner');
+        const loginError = document.getElementById('login-error');
+        
+        loginSpinner.style.display = 'block';
+        loginError.textContent = '';
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `https://hqbswwhkncwmztisouli.supabase.co/auth/v1/callback`,
+            redirectTo: `${window.location.origin}/auth/callback`,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent'
@@ -418,7 +397,6 @@
         if (error) throw error;
         
         // The user will be redirected away from the page at this point
-        // We don't need to do anything else here
       } catch (error) {
         console.error('Google login error:', error);
         document.getElementById('login-spinner').style.display = 'none';
@@ -426,34 +404,14 @@
       }
     });
     
-    document.getElementById('microsoft-login').addEventListener('click', async () => {
-      try {
-        document.getElementById('login-spinner').style.display = 'block';
-        document.getElementById('login-error').textContent = '';
-        
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'azure',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-            scopes: 'email profile openid'
-          }
-        });
-        
-        if (error) throw error;
-        
-        // The user will be redirected away from the page
-      } catch (error) {
-        console.error('Microsoft login error:', error);
-        document.getElementById('login-spinner').style.display = 'none';
-        document.getElementById('login-error').textContent = error.message || 'Error signing in with Microsoft';
-      }
-    });
-    
-    // OAuth Signup Handlers (same as login for OAuth)
+    // OAuth Signup Handler (same as login for OAuth)
     document.getElementById('google-signup').addEventListener('click', async () => {
       try {
-        document.getElementById('signup-spinner').style.display = 'block';
-        document.getElementById('signup-error').textContent = '';
+        const signupSpinner = document.getElementById('signup-spinner');
+        const signupError = document.getElementById('signup-error');
+        
+        signupSpinner.style.display = 'block';
+        signupError.textContent = '';
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -476,29 +434,6 @@
       }
     });
     
-    document.getElementById('microsoft-signup').addEventListener('click', async () => {
-      try {
-        document.getElementById('signup-spinner').style.display = 'block';
-        document.getElementById('signup-error').textContent = '';
-        
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'azure',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-            scopes: 'email profile openid'
-          }
-        });
-        
-        if (error) throw error;
-        
-        // The user will be redirected away from the page
-      } catch (error) {
-        console.error('Microsoft signup error:', error);
-        document.getElementById('signup-spinner').style.display = 'none';
-        document.getElementById('signup-error').textContent = error.message || 'Error signing up with Microsoft';
-      }
-    });
-    
     // Launch React app and hide authentication
     function launchReactApp(userData) {
       // Hide authentication UI
@@ -518,103 +453,6 @@
       
       console.log('React app launched with user:', userData);
     }
-    
-    // Form submission - Login
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      
-      // Show loading spinner
-      const spinner = document.getElementById('login-spinner');
-      spinner.style.display = 'block';
-      
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        // Hide spinner
-        spinner.style.display = 'none';
-        
-        if (error) throw error;
-        
-        // User authenticated successfully
-        const userData = {
-          email: data.user.email,
-          name: data.user.email.split('@')[0],
-          id: data.user.id,
-          isAuthenticated: true,
-          loginTime: new Date().toISOString()
-        };
-        
-        // Launch React app with user data
-        launchReactApp(userData);
-        
-      } catch (error) {
-        // Hide spinner and show error
-        spinner.style.display = 'none';
-        document.getElementById('login-error').textContent = error.message || 'Error logging in';
-      }
-    });
-    
-    // Form submission - Signup
-    document.getElementById('signup-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('signup-email').value;
-      const password = document.getElementById('signup-password').value;
-      
-      // Show loading spinner
-      const spinner = document.getElementById('signup-spinner');
-      spinner.style.display = 'block';
-      
-      // Password validation
-      if (password.length < 6) {
-        spinner.style.display = 'none';
-        document.getElementById('signup-error').textContent = 'Password must be at least 6 characters';
-        return;
-      }
-      
-      try {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin
-          }
-        });
-        
-        // Hide spinner
-        spinner.style.display = 'none';
-        
-        if (error) throw error;
-        
-        if (data.user && data.session) {
-          // User is automatically signed in
-          const userData = {
-            email: data.user.email,
-            name: data.user.email.split('@')[0],
-            id: data.user.id,
-            isAuthenticated: true,
-            isNewUser: true,
-            signupTime: new Date().toISOString()
-          };
-          
-          // Launch React app with user data
-          launchReactApp(userData);
-        } else {
-          // Email confirmation required
-          document.getElementById('signup-error').textContent = 
-            'Please check your email for a confirmation link to complete your registration.';
-        }
-        
-      } catch (error) {
-        // Hide spinner and show error
-        spinner.style.display = 'none';
-        document.getElementById('signup-error').textContent = error.message || 'Error creating account';
-      }
-    });
   </script>
 </body>
 </html>
