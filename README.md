@@ -15,9 +15,10 @@
    npm run dev
    ```
 
-3. **Set Up Environment Variables** (working on🚧)  
+3. **Set Up Environment Variables**
    Create a `.env` file in the root directory and add:  
-   ```   VITE_API_URL=
+   ```
+     VITE_API_URL=
    ```
 
 
