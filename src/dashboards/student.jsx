@@ -1,14 +1,34 @@
-// src/dashboards/Student.jsx
-import React, { useState } from "react";
+// src/Student.jsx
+import React, { useState, useEffect } from "react";
 import "./Student.css";
 import ReactDOM from 'react-dom/client';
-
 
 const Student = () => {
   // State to track membership requests
   const [pendingMemberships, setPendingMemberships] = useState([]);
   // State to track modal visibility
   const [selectedOrg, setSelectedOrg] = useState(null);
+  // State to track user data
+  const [userData, setUserData] = useState(null);
+
+  // Load user data on component mount
+  useEffect(() => {
+    // Get user data from localStorage
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      try {
+        const parsedUserData = JSON.parse(storedUserData);
+        setUserData(parsedUserData);
+        console.log("User data loaded:", parsedUserData);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    } else {
+      console.warn("No user data found, redirecting to login...");
+      // Redirect to login if no user data is found
+      window.location.href = '/';
+    }
+  }, []);
 
   // Sample organization data
   const organizations = [
@@ -76,8 +96,25 @@ const Student = () => {
     setSelectedOrg(null);
   };
 
+  // Function to handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    window.location.href = '/';
+  };
+
   return (
     <div className="dashboard-container">
+      {/* Header with User Info */}
+      {userData && (
+        <div className="user-header">
+          <div className="user-welcome">
+            <h3>Welcome, {userData.name}!</h3>
+            <p>{userData.email}</p>
+          </div>
+          <button onClick={handleLogout} className="logout-button">Logout</button>
+        </div>
+      )}
+      
       {/* Welcome Section */}
       <div className="welcome-section">
   
@@ -91,13 +128,13 @@ const Student = () => {
         <div className="welcome-content">
           <h1>🎉 Welcome to NEU orgAIze! 🎓</h1>
           <p>
-            Get ready to level up your student life at New Era University’s College of Information and Computing Studies! 🚀<br /><br />
+            Get ready to level up your student life at New Era University's College of Information and Computing Studies! 🚀<br /><br />
   
             <strong>NEU orgAIze</strong> is your all-in-one hub for everything related to student organizations. Stay updated with the latest <strong>events 📅, activities 🕹️ ,  announcements 📢, birthday celebrants 🍰,  and file management 📂</strong> — all in one place!<br /><br />
   
             Meet your organization's <strong>officers 🧑‍💼 and fellow members 🤝</strong>, explore what each group has to offer, and find your perfect fit. Whether you're into tech, arts, leadership, or community service, there's a place here for you! 💡💻🎭<br /><br />
   
-            Don’t miss out on the chance to <strong>connect, grow, and thrive</strong> — join a student organization today and make your NEU journey unforgettable! 🌟
+            Don't miss out on the chance to <strong>connect, grow, and thrive</strong> — join a student organization today and make your NEU journey unforgettable! 🌟
           </p>
         </div>
   
@@ -112,9 +149,6 @@ const Student = () => {
         
       </div>
    
-  
-
-
       {/* Organizations Section */}
       <div className="section-header">
       <h2>🔍 Explore CICS Student Organizations</h2>
@@ -151,48 +185,45 @@ const Student = () => {
       </div>
 
       {/* App Features Section */}
-<div className="app-features-section">
-  <div className="section-header">
-    <h2>🚀 NEU orgAIze App Features</h2>
-    <p>Revolutionize your student organization experience</p>
-  </div>
+      <div className="app-features-section">
+        <div className="section-header">
+          <h2>🚀 NEU orgAIze App Features</h2>
+          <p>Revolutionize your student organization experience</p>
+        </div>
 
-  <div className="features-grid">
-    <div className="feature-card">
-      <div className="feature-icon ai-icon"></div>
-      <h3>🤖 AI Student Assistant</h3>
-      <p>Need help writing letters, answering assignments, or generating ideas? Our built-in AI assistant works like ChatGPT — available 24/7 to support your academic and org tasks.</p>
-    </div>
+        <div className="features-grid">
+          <div className="feature-card">
+            <div className="feature-icon ai-icon"></div>
+            <h3>🤖 AI Student Assistant</h3>
+            <p>Need help writing letters, answering assignments, or generating ideas? Our built-in AI assistant works like ChatGPT — available 24/7 to support your academic and org tasks.</p>
+          </div>
 
-    <div className="feature-card">
-      <div className="feature-icon file-icon"></div>
-      <h3>📁 Smart File Management</h3>
-      <p>Access and share organization documents, meeting minutes, and project files with our secure cloud storage system.</p>
-    </div>
+          <div className="feature-card">
+            <div className="feature-icon file-icon"></div>
+            <h3>📁 Smart File Management</h3>
+            <p>Access and share organization documents, meeting minutes, and project files with our secure cloud storage system.</p>
+          </div>
 
-    <div className="feature-card">
-      <div className="feature-icon updates-icon"></div>
-      <h3>🔔 Real-time Activity Updates</h3>
-      <p>Never miss an important announcement or event with personalized notifications and a comprehensive activity feed.</p>
-    </div>
+          <div className="feature-card">
+            <div className="feature-icon updates-icon"></div>
+            <h3>🔔 Real-time Activity Updates</h3>
+            <p>Never miss an important announcement or event with personalized notifications and a comprehensive activity feed.</p>
+          </div>
 
-    <div className="feature-card">
-      <div className="feature-icon repo-icon"></div>
-      <h3>📚 Knowledge Repositories</h3>
-      <p>Benefit from years of resources, tutorials, and guides created by organization alumni and current members.</p>
-    </div>
+          <div className="feature-card">
+            <div className="feature-icon repo-icon"></div>
+            <h3>📚 Knowledge Repositories</h3>
+            <p>Benefit from years of resources, tutorials, and guides created by organization alumni and current members.</p>
+          </div>
+        </div>
 
-    
-  </div>
-
-  <div className="app-cta">
-    <h3>🌟 Transform Your University Experience Today</h3>
-    <p>NEU orgAIze brings powerful tools and a vibrant community to help you thrive throughout your academic journey.</p>
-    <button className="download-app-btn">Join Now!</button>
-  </div>
-</div>
+        <div className="app-cta">
+          <h3>🌟 Transform Your University Experience Today</h3>
+          <p>NEU orgAIze brings powerful tools and a vibrant community to help you thrive throughout your academic journey.</p>
+          <button className="download-app-btn">Join Now!</button>
+        </div>
+      </div>
         
-
       {/* Recent Activity Section */}
       <div className="section-header">
         <h2>Recent Organization Activities</h2>
@@ -283,9 +314,8 @@ const Student = () => {
                   onClick={() => handleMembershipRequest(selectedOrg.id)}
                   disabled={pendingMemberships.includes(selectedOrg.id)}
                 >
-                  {pendingMemberships.includes(selectedOrg.id) ? 'Pending Approval' : 'Be a Member'}
+                  {pendingMemberships.includes(selectedOrg.id) ? 'Pending Approval' : 'Request Membership'}
                 </button>
-                <button className="follow-org-button">Be a Member</button>
               </div>
             </div>
           </div>
@@ -294,10 +324,14 @@ const Student = () => {
     </div>
   );
 };
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <index.html />
-  </React.StrictMode>
-);
+
+// Create the entry point - this will render the Student component directly
+if (document.getElementById('root')) {
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <React.StrictMode>
+      <Student />
+    </React.StrictMode>
+  );
+}
 
 export default Student;
