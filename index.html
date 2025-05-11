@@ -1,14 +1,407 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/neu.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEU orgAIze</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/ai/main.jsx"></script>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/neu.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEU orgAIze</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
     
-  </body>
+    .container {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .content-section {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+    
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .route-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      gap: 10px;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .primary-button {
+      background-color: #c41230; /* NEU Red */
+      color: white;
+    }
+    
+    .primary-button:hover {
+      background-color: #a50f28;
+    }
+    
+    .route-button-text {
+      font-size: 16px;
+      color: inherit;
+    }
+    
+    .button-icon {
+      font-size: 20px;
+    }
+    
+    .neu-logo {
+      width: 120px;
+      margin-bottom: 20px;
+    }
+
+    /* Auth Container Styles */
+    .auth-container {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .auth-container.active {
+      display: flex;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .auth-form input {
+      padding: 14px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+
+    .auth-form input:focus {
+      outline: none;
+      border-color: #c41230;
+    }
+
+    .auth-form button {
+      padding: 14px;
+      border-radius: 6px;
+      background-color: #c41230;
+      color: white;
+      border: none;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .auth-form button:hover {
+      background-color: #a50f28;
+    }
+
+    .error-message {
+      color: #c41230;
+      font-size: 14px;
+      text-align: left;
+      min-height: 20px;
+    }
+
+    .auth-toggle {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .auth-toggle span {
+      color: #c41230;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .auth-toggle span:hover {
+      text-decoration: underline;
+    }
+
+    .back-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+    }
+
+    .back-button:hover {
+      color: #c41230;
+    }
+
+    #main-view, #login-container, #signup-container {
+      width: 100%;
+    }
+
+    /* Loading indicator for authentication */
+    .loading-spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      margin: 10px auto;
+      border: 4px solid rgba(196, 18, 48, 0.2);
+      border-top: 4px solid #c41230;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .oauth-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .oauth-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background-color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .oauth-button:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 15px 0;
+      color: #777;
+      font-size: 14px;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .divider::before {
+      margin-right: 10px;
+    }
+    
+    .divider::after {
+      margin-left: 10px;
+    }
+    .oauth-button ion-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+  </style>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css" rel="stylesheet">
+</head>
+<body>
+  <div id="auth-wrapper">
+    <div class="container">
+      <img src="/neu.png" alt="" class="neu-logo">
+      
+      <!-- Main View with Login Form -->
+      <div id="login-container" class="auth-container" style="display: flex;">
+        <h2>Login to NEU orgAIze</h2>
+     <!-- OAuth Login Buttons -->
+<div class="oauth-buttons">
+  <button id="google-login" class="oauth-button">
+    <ion-icon name="logo-google"></ion-icon>
+    <span>Continue with Google</span>
+  </button>
+</div>
+
+        
+        <!-- Loading spinner for login -->
+        <div id="login-spinner" class="loading-spinner"></div>
+        <!-- Error message for login -->
+        <div id="login-error" class="error-message"></div>
+        
+       
+     
+        <!-- Loading spinner for signup -->
+        <div id="signup-spinner" class="loading-spinner"></div>
+        <!-- Error message for signup -->
+        <div id="signup-error" class="error-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Root element for React app -->
+  <div id="root" style="display: none;"></div>
+  
+  <!-- Supabase JS library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Import supabaseClient.js as a module -->
+  <script type="module">
+    import supabase from '/lib/supabaseClient.js';
+    
+    // DOM Elements
+    const loginContainer = document.getElementById('login-container');
+    const authWrapper = document.getElementById('auth-wrapper');
+    const rootElement = document.getElementById('root');
+    
+    
+    // Check for OAuth callback and existing session on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // First, check if this is a OAuth redirect callback
+        const hash = window.location.hash;
+        const query = window.location.search;
+        
+        if (hash.includes('access_token') || query.includes('code=')) {
+          // Process the OAuth callback
+          document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">Processing login, please wait...</div>';
+          
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Error during OAuth callback:', error);
+            window.location.href = '/'; // Redirect to login page on error
+            return;
+          }
+          
+          if (data.session) {
+            const userData = {
+              email: data.session.user.email,
+              name: data.session.user.user_metadata?.name || data.session.user.email.split('@')[0],
+              id: data.session.user.id,
+              isAuthenticated: true,
+              loginTime: new Date().toISOString()
+            };
+            
+            // Store user data and launch app
+            localStorage.setItem('userData', JSON.stringify(userData));
+            window.location.href = '/'; // Redirect to the app's main page
+            return;
+          }
+        }
+        
+        // Normal session check
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          return;
+        }
+        
+        if (data.session) {
+          console.log('Existing session found:', data.session);
+          
+          const userData = {
+            email: data.session.user.email,
+            name: data.session.user.user_metadata?.name || data.session.user.email.split('@')[0],
+            id: data.session.user.id,
+            isAuthenticated: true,
+            loginTime: new Date().toISOString()
+          };
+          
+          launchReactApp(userData);
+        }
+      } catch (error) {
+        console.error('Error during auth initialization:', error);
+      }
+    });
+    
+    // OAuth Login Handler
+    document.getElementById('google-login').addEventListener('click', async () => {
+      try {
+        const loginSpinner = document.getElementById('login-spinner');
+        const loginError = document.getElementById('login-error');
+        
+        loginSpinner.style.display = 'block';
+        loginError.textContent = '';
+        
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+            queryParams: {
+              access_type: 'offline',
+              prompt: 'consent'
+            }
+          }
+        });
+        
+        if (error) throw error;
+        
+        // The user will be redirected away from the page at this point
+      } catch (error) {
+        console.error('Google login error:', error);
+        document.getElementById('login-spinner').style.display = 'none';
+        document.getElementById('login-error').textContent = error.message || 'Error signing in with Google';
+      }
+    });
+    
+   
+    
+    // Launch React app and hide authentication
+    function launchReactApp(userData) {
+      // Hide authentication UI
+      authWrapper.style.display = 'none';
+      
+      // Show React app container
+      rootElement.style.display = 'block';
+      
+      // Store user data in localStorage for React app to access
+      localStorage.setItem('userData', JSON.stringify(userData));
+      
+      // Load React app script
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/dashboards/main2.jsx';
+      document.body.appendChild(script);
+      
+      console.log('React app launched with user:', userData);
+    }
+  </script>
+</body>
 </html>

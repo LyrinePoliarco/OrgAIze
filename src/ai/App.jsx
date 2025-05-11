@@ -202,10 +202,12 @@ const App = () => {
         <Route path="/" element={<AppContent />} /> {/* Default route - Chat interface */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/dashboards/Student" element={<Student />} />
-        <Route path="/dashboards/AcssOrgChart" element={<AcssOrgChart />} />
-        <Route path="/dashboards/Acss" element={<Acss />} />
-        <Route path="/dashboards/AcssStudent" element={<AcssStudent />} />
+
+          {/* <Route path="/student-dashboard" element={<Student />} /> */}
+           {/* Route for your Student component */}
+
+ 
+
         {/* You can add a redirect for the root path if you want to start at login */}
         {/* <Route path="/" element={<Navigate to="/login" />} /> */}
       </Routes>
