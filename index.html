@@ -231,7 +231,15 @@
     .divider::after {
       margin-left: 10px;
     }
+    .oauth-button ion-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
   </style>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css" rel="stylesheet">
 </head>
 <body>
@@ -242,42 +250,22 @@
       <!-- Main View with Login Form -->
       <div id="login-container" class="auth-container" style="display: flex;">
         <h2>Login to NEU orgAIze</h2>
-        
-        <!-- OAuth Login Buttons -->
-        <div class="oauth-buttons">
-          <button id="google-login" class="oauth-button">
-            <i class="icon ion-logo-google"></i>
-            <span>Continue with Google</span>
-          </button>
-        </div>
+     <!-- OAuth Login Buttons -->
+<div class="oauth-buttons">
+  <button id="google-login" class="oauth-button">
+    <ion-icon name="logo-google"></ion-icon>
+    <span>Continue with Google</span>
+  </button>
+</div>
+
         
         <!-- Loading spinner for login -->
         <div id="login-spinner" class="loading-spinner"></div>
         <!-- Error message for login -->
         <div id="login-error" class="error-message"></div>
         
-        <!-- Link to signup form -->
-        <div class="auth-toggle">
-          Don't have an account? <span id="show-signup">Sign up</span>
-        </div>
-      </div>
-      
-      <!-- Sign Up View -->
-      <div id="signup-container" class="auth-container">
-        <button class="back-button" id="back-from-signup">
-          <i class="icon ion-md-arrow-back"></i> Back
-        </button>
-        
-        <h2>Create an Account</h2>
-        
-        <!-- OAuth Signup Buttons -->
-        <div class="oauth-buttons">
-          <button id="google-signup" class="oauth-button">
-            <i class="icon ion-logo-google"></i>
-            <span>Sign up with Google</span>
-          </button>
-        </div>
-        
+       
+     
         <!-- Loading spinner for signup -->
         <div id="signup-spinner" class="loading-spinner"></div>
         <!-- Error message for signup -->
@@ -298,20 +286,9 @@
     
     // DOM Elements
     const loginContainer = document.getElementById('login-container');
-    const signupContainer = document.getElementById('signup-container');
     const authWrapper = document.getElementById('auth-wrapper');
     const rootElement = document.getElementById('root');
     
-    // Toggle between login and signup views
-    document.getElementById('show-signup')?.addEventListener('click', () => {
-      loginContainer.style.display = 'none';
-      signupContainer.style.display = 'flex';
-    });
-    
-    document.getElementById('back-from-signup')?.addEventListener('click', () => {
-      signupContainer.style.display = 'none';
-      loginContainer.style.display = 'flex';
-    });
     
     // Check for OAuth callback and existing session on page load
     window.addEventListener('DOMContentLoaded', async () => {
@@ -367,7 +344,7 @@
             loginTime: new Date().toISOString()
           };
           
-          // launchReactApp(userData);
+          launchReactApp(userData);
         }
       } catch (error) {
         console.error('Error during auth initialization:', error);
@@ -404,35 +381,7 @@
       }
     });
     
-    // OAuth Signup Handler (same as login for OAuth)
-    document.getElementById('google-signup').addEventListener('click', async () => {
-      try {
-        const signupSpinner = document.getElementById('signup-spinner');
-        const signupError = document.getElementById('signup-error');
-        
-        signupSpinner.style.display = 'block';
-        signupError.textContent = '';
-        
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent'
-            }
-          }
-        });
-        
-        if (error) throw error;
-        
-        // The user will be redirected away from the page
-      } catch (error) {
-        console.error('Google signup error:', error);
-        document.getElementById('signup-spinner').style.display = 'none';
-        document.getElementById('signup-error').textContent = error.message || 'Error signing up with Google';
-      }
-    });
+   
     
     // Launch React app and hide authentication
     function launchReactApp(userData) {
@@ -448,7 +397,7 @@
       // Load React app script
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = '/src/ai/main.jsx';
+      script.src = '/src/dashboards/main2.jsx';
       document.body.appendChild(script);
       
       console.log('React app launched with user:', userData);

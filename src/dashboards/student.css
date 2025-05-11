@@ -1249,26 +1249,34 @@
     background: linear-gradient(90deg, #374151 0%, #4b5563 50%, #374151 100%);
   }
 }
-
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;  /* Slightly wider for better usability */
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
+  margin: 2px 0; /* Add small margin for better tracking */
 }
 
 ::-webkit-scrollbar-thumb {
   background: #c7d2fe;
   border-radius: 10px;
   transition: background 0.3s;
+  min-height: 40px; /* Minimum height to ensure visibility */
+  border: 2px solid transparent; /* Creates padding effect */
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #4f46e5;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-button {
+  display: none; /* Hide default buttons for cleaner look */
 }
 
 body.dark-theme ::-webkit-scrollbar-track {
@@ -1277,13 +1285,15 @@ body.dark-theme ::-webkit-scrollbar-track {
 
 body.dark-theme ::-webkit-scrollbar-thumb {
   background: #4338ca;
+  background-clip: padding-box;
 }
 
 body.dark-theme ::-webkit-scrollbar-thumb:hover {
   background: #6366f1;
+  background-clip: padding-box;
 }
 
-/* Theme Toggle Button */
+/* Theme Toggle Button - keeping your original code */
 .theme-toggle {
   position: fixed;
   bottom: 2rem;
@@ -1315,7 +1325,6 @@ body.dark-theme .theme-toggle {
 body.dark-theme .theme-toggle:hover {
   background-color: #7c3aed;
 }
-
 /* Toast Notifications */
 .toast-container {
   position: fixed;
