@@ -1,0 +1,52 @@
+/* AcssStudent.css */
+/* Additional styles for the student dashboard */
+
+.content-display {
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  min-height: 50px;
+  line-height: 1.6;
+  color: var(--text-medium);
+  background-color: #f9fafb;
+}
+
+/* Hide the upload area in student view */
+.upload-area {
+  display: none;
+}
+
+/* Make files panel span full width */
+.files-list-panel {
+  grid-column: 1 / -1;
+}
+
+/* Adjust spacing for content without edit buttons */
+.panel-header h3 {
+  margin-right: auto;
+}
+
+/* Add some styling to make read-only content look nicer */
+.meeting-link-item, .celebrant-card {
+  transition: transform 0.2s ease;
+}
+
+.meeting-link-item:hover, .celebrant-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for action buttons available to students */
+.action-btn.download {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.action-btn.download:before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}

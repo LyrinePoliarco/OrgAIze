@@ -1,3 +1,30 @@
+
+
+## Get Started
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/LyrinePoliarco/OrgAIze.git
+   cd OrgAIze
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   npm install lucide-react
+   npm run dev
+   ```
+
+3. **Set Up Environment Variables**
+   Create a `.env` file in the root directory and add:  
+   ```
+     VITE_API_URL=
+   ```
+
+
+
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
