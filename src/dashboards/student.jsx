@@ -18,20 +18,37 @@ const StudentContent = () => {
 
   // Existing useEffect for loading user data
   useEffect(() => {
-    const storedUserData = localStorage.getItem('userData');
-    if (storedUserData) {
-      try {
-        const parsedUserData = JSON.parse(storedUserData);
-        setUserData(parsedUserData);
-        console.log("User data loaded:", parsedUserData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    } else {
-      console.warn("No user data found, redirecting to login...");
-      window.location.href = '/';
+  const storedUserData = localStorage.getItem('userData');
+  if (storedUserData) {
+    try {
+      const parsedUserData = JSON.parse(storedUserData);
+      setUserData(parsedUserData);
+      console.log("User data loaded:", parsedUserData);
+
+      // Fetch role from Supabase here
+      (async () => {
+        const { data, error } = await supabase
+          .from('users')
+          .select('roles')
+          .eq('email', parsedUserData.email)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+        } else {
+          setUserData(prev => ({ ...prev, role: data.roles }));
+        }
+      })();
+
+    } catch (error) {
+      console.error("Error parsing user data:", error);
     }
-  }, []);
+  } else {
+    console.warn("No user data found, redirecting to login...");
+    window.location.href = '/';
+  }
+}, []);
+
 
   // Sample organization data
   const organizations = [
@@ -82,6 +99,7 @@ const StudentContent = () => {
     },
   ];
 
+ 
   // Function to handle membership requests
   const handleMembershipRequest = (orgId) => {
     if (!pendingMemberships.includes(orgId)) {
@@ -162,6 +180,7 @@ return (
         <div className="user-welcome">
           <h3>Welcome, {userData.name}!</h3>
           <p>{userData.email}</p>
+          <p>Role: {userData.role}</p> {/* 👈 Add this line */}
         </div>
         <button
           onClick={launchReactAiApp} // 🔁 DIRECTLY LAUNCHES THE AI APP
@@ -369,14 +388,17 @@ return (
               </div>
               
               <div className="modal-actions">
-                <button 
-                  className={`membership-button ${pendingMemberships.includes(selectedOrg.id) ? 'pending' : ''}`}
-                  onClick={() => handleMembershipRequest(selectedOrg.id)}
-                  disabled={pendingMemberships.includes(selectedOrg.id)}
-                >
-                  {pendingMemberships.includes(selectedOrg.id) ? 'Pending Approval' : 'Request Membership'}
-                </button>
-              </div>
+            <button 
+              className="membership-button"
+              onClick={() => handleMembershipRequest(selectedOrg.id)}
+              disabled={pendingMemberships.includes(selectedOrg.id)}
+              
+            >
+              {pendingMemberships.includes(selectedOrg.id) ? 'Pending Approval' : 'Request Membership!'}
+            </button>
+           
+          </div>
+
             </div>
           </div>
         </div>

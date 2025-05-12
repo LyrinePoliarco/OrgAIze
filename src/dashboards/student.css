@@ -1,5 +1,13 @@
 /* src/dashboards/Student.css */
 
+/* General Layout */
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: 'Inter', sans-serif;
+  
+}
 
 /* Welcome Section */
 .welcome-section {
@@ -270,8 +278,6 @@
   align-items: center;
   z-index: 1000;
   padding: 1rem;
-  /* Add this to ensure the overlay itself is scrollable if needed */
-  overflow-y: auto;
 }
 
 .org-modal {
@@ -279,13 +285,10 @@
   border-radius: 12px;
   width: 100%;
   max-width: 700px;
-  max-height: 90vh; /* Keep this but ensure content is scrollable */
-  overflow-y: auto; /* This enables scrolling within the modal */
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   position: relative;
-  /* Ensure the modal doesn't grow beyond viewport height */
-  display: flex;
-  flex-direction: column;
 }
 
 .modal-close-btn {
@@ -316,8 +319,6 @@
   background-size: cover;
   background-position: center;
   position: relative;
-  /* Remove any flex-grow to ensure it doesn't push content out of view */
-  flex-shrink: 0;
 }
 
 .modal-badge {
@@ -341,9 +342,6 @@
 
 .modal-content {
   padding: 2rem;
-  /* Make this section scrollable if it exceeds available space */
-  overflow-y: auto;
-  flex: 1;
 }
 
 .modal-description, 
@@ -418,9 +416,6 @@
 .modal-actions {
   display: flex;
   gap: 1rem;
-  /* Ensure buttons stay at bottom even when scrolling */
-  flex-shrink: 0;
-  padding: 0 2rem 2rem;
 }
 
 .membership-button,
@@ -445,31 +440,6 @@
 .follow-org-button:hover {
   background-color: rgba(var(--modal-color), 0.1);
 }
-
-/* Add these global styles to ensure proper scrolling throughout the application */
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-}
-
-#root {
-  height: 100%;
-  overflow-y: auto;
-}
-
-/*empyt state*/
-
-
-
-
-
-
-
-
-
-
 
 /* App Features Section */
 .app-features-section {
@@ -543,7 +513,7 @@ html, body {
 
 .app-cta {
   text-align: center;
-  margin-top: 3rem;
+  margin-top: 8rem;
   padding: 0 2rem;
 }
 
@@ -900,30 +870,27 @@ html, body {
   padding-left: 5px;
 }
 
-.membership-button, .follow-org-button {
-  position: relative;
-  overflow: hidden;
+.membership-button {
+  background-color: #4CAF50; /* Green background */
+  color: white; /* White text */
+  border: none; /* Remove border */
+  padding: 10px 20px ; /* Add padding */
+  font-size: 16px; /* Set font size */
+  cursor: pointer; /* Change cursor to pointer */
+  border-radius: 5px; /* Rounded corners */
+  transition: background-color 0.3s; /* Smooth background color transition */
+  margin-left: 300px;
 }
 
-.membership-button::after, .follow-org-button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.3);
-  opacity: 0;
-  border-radius: 100%;
-  transform: scale(1, 1) translate(-50%);
-  transform-origin: 50% 50%;
+.membership-button:hover {
+  background-color: #45a049; /* Darker green on hover */
 }
 
-.membership-button:active::after, .follow-org-button:active::after {
-  opacity: 1;
-  transform: scale(50, 50) translate(-50%);
-  transition: transform 0.5s, opacity 1s;
+.membership-button:disabled {
+  background-color: #f8bdbd; /* Light gray for disabled state */
+  cursor: not-allowed; /* Change cursor for disabled state */
 }
+
 
 /* Empty State Styling */
 .empty-state {
@@ -1279,34 +1246,26 @@ html, body {
     background: linear-gradient(90deg, #374151 0%, #4b5563 50%, #374151 100%);
   }
 }
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 10;  /* Slightly wider for better usability */
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
-  margin: 2px 0; /* Add small margin for better tracking */
 }
 
 ::-webkit-scrollbar-thumb {
   background: #c7d2fe;
   border-radius: 10px;
   transition: background 0.3s;
-  min-height: 40px; /* Minimum height to ensure visibility */
-  border: 2px solid transparent; /* Creates padding effect */
-  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #4f46e5;
-  background-clip: padding-box;
-}
-
-::-webkit-scrollbar-button {
-  display: none; /* Hide default buttons for cleaner look */
 }
 
 body.dark-theme ::-webkit-scrollbar-track {
@@ -1315,15 +1274,13 @@ body.dark-theme ::-webkit-scrollbar-track {
 
 body.dark-theme ::-webkit-scrollbar-thumb {
   background: #4338ca;
-  background-clip: padding-box;
 }
 
 body.dark-theme ::-webkit-scrollbar-thumb:hover {
   background: #6366f1;
-  background-clip: padding-box;
 }
 
-/* Theme Toggle Button - keeping your original code */
+/* Theme Toggle Button */
 .theme-toggle {
   position: fixed;
   bottom: 2rem;
@@ -1355,6 +1312,7 @@ body.dark-theme .theme-toggle {
 body.dark-theme .theme-toggle:hover {
   background-color: #7c3aed;
 }
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;
@@ -1488,5 +1446,3 @@ body.dark-theme .toast-close:hover {
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
 }
-
-

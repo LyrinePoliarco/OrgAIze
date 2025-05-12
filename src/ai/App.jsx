@@ -5,7 +5,6 @@ import PromptForm from "../components/PromptForm";
 import Sidebar from "../components/Sidebar";
 import LoginPage from "../authentication/LoginPage";
 import SignupPage from "../authentication/SignupPage";
-import Student from "../dashboards/Student";
 import AcssOrgChart from "../dashboards/AcssOrgChart";
 import Acss from "../dashboards/Acss";
 import AcssStudent from "../dashboards/AcssStudent";
