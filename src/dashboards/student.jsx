@@ -1,24 +1,23 @@
-// src/Student.jsx
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "./student.css";
 import LoginPage from "../authentication/LoginPage";
 import SignupPage from "../authentication/SignupPage";
 import ReactDOM from 'react-dom/client';
-// Import supabase client
+// import "../../config/vite.config.js";
+
 import supabase from '../../lib/supabaseClient.js';
 
 const StudentContent = () => {
-  // State to track membership requests
+  // Existing states
   const [pendingMemberships, setPendingMemberships] = useState([]);
-  // State to track modal visibility
   const [selectedOrg, setSelectedOrg] = useState(null);
-  // State to track user data
   const [userData, setUserData] = useState(null);
 
-  // Load user data on component mount
+
+
+  // Existing useEffect for loading user data
   useEffect(() => {
-    // Get user data from localStorage
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
       try {
@@ -30,7 +29,6 @@ const StudentContent = () => {
       }
     } else {
       console.warn("No user data found, redirecting to login...");
-      // Redirect to login if no user data is found
       window.location.href = '/';
     }
   }, []);
@@ -100,6 +98,36 @@ const StudentContent = () => {
   const closeOrgModal = () => {
     setSelectedOrg(null);
   };
+  
+ // Function to launch React AI app
+  const launchReactAiApp = () => {
+    try {
+      // Hide current body content (optional, depending on your UI)
+      document.body.classList.add('hide-content');
+      
+      // Ensure we have user data
+      const storedUserData = localStorage.getItem('userData');
+      if (!storedUserData) {
+        throw new Error('No user data found');
+      }
+
+      // Create a script element to load the AI main app
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/ai/main.jsx';
+      
+      // Append script to body
+      document.body.appendChild(script);
+      
+      console.log('AI React app launched');
+    } catch (error) {
+      console.error('Error launching AI app:', error);
+      // Optionally show an error to the user
+      setAiError('Could not launch AI assistant');
+    }
+  };
+
+ 
 
   // Function to handle logout
   const handleLogout = async () => {
@@ -126,29 +154,26 @@ const StudentContent = () => {
       window.location.href = '/';
     }
   };
-
-  return (
-    <div className="dashboard-container">
-      {/* Header with User Info */}
-      {userData && (
-        <div className="user-header">
-          <div className="user-welcome">
-            <h3>Welcome, {userData.name}!</h3>
-            <p>{userData.email}</p>
-          </div>
-          <button
-            onClick={() => {
-              console.log("Opening chat with OrgAIze...");
-            }}
-            className="chat-with-orgaiize-button"
-            style={{ marginLeft: 'auto' }}
-          >
-            Chat with OrgAIze
-          </button>
-          <button onClick={handleLogout} className="logout-button">Logout</button>
+return (
+  <div className="dashboard-container">
+    {/* Header with User Info */}
+    {userData && (
+      <div className="user-header">
+        <div className="user-welcome">
+          <h3>Welcome, {userData.name}!</h3>
+          <p>{userData.email}</p>
         </div>
-      )}
-      
+        <button
+          onClick={launchReactAiApp} // 🔁 DIRECTLY LAUNCHES THE AI APP
+          className="chat-with-orgaiize-button"
+          style={{ marginLeft: 'auto' }}
+        >
+          Chat with OrgAIze
+        </button>
+        <button onClick={handleLogout} className="logout-button">Logout</button>
+      </div>
+    )}
+
       {/* Welcome Section */}
       <div className="welcome-section">
   
