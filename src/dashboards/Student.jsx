@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import "./student.css";
-import LoginPage from "../authentication/LoginPage";
-import SignupPage from "../authentication/SignupPage";
+import "./Student.css";
 import ReactDOM from 'react-dom/client';
 // import "../../config/vite.config.js";
 
