@@ -1,0 +1,39 @@
+/* Sidebar must be relatively positioned for absolute children */
+.sidebar {
+  position: relative;
+  height: 100vh;
+  overflow: visible;
+}
+
+/* Container positions the button at bottom-left */
+.backbutton-container {
+  position: absolute;
+  bottom: 1rem; /* 16px */
+  left: 1rem;   /* 16px */
+  z-index: 10;
+}
+
+/* Styles for the button */
+.backbutton {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px; /* fully rounded */
+  background-color: #e5e7eb; /* light gray */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+/* .backbutton:hover {
+  background-color: #d1d5db;
+} */
+
+/* Dark mode support */
+.dark .backbutton {
+  background-color: #f1f1f1;
+}
+
+/* .dark .backbutton:hover {
+  background-color: #4b5563;
+} */
