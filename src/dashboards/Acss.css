@@ -802,3 +802,15 @@ body {
 .meeting-link-info a:hover {
   text-decoration: underline;
 }
+/* .chat-with-orgaiize-button {
+  position: fixed;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.3s, transform 0.2s;
+  z-index: 300;
+  align-items: center;
+} */

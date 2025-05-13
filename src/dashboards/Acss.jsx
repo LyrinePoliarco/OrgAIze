@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AcssOrgChart from './AcssOrgChart';
 import './Acss.css';
+import supabase from '../../lib/supabaseClient.js';
 
 // Placeholder icons (replace with actual imports later)
 import { 
@@ -17,9 +19,18 @@ import {
   FaUsersCog
 } from 'react-icons/fa';
 
-const Acss = () => {
+const AcssContent = () => {
   // State for active tab
   const [activeTab, setActiveTab] = useState('home');
+  
+  // State for user data
+  const [userData, setUserData] = useState({
+    name: 'Default User',
+    role: 'ACSS Executive'
+  });
+  
+  // State for AI error
+  const [aiError, setAiError] = useState(null);
   
   // States for editable content
   const [orgDescription, setOrgDescription] = useState(
@@ -68,10 +79,81 @@ const Acss = () => {
     { id: 2, name: "John Rivera", year: "1st Year", section: "CS-101", reason: "Looking forward to participating in technical workshops and hackathons.", date: "May 9, 2025", imageUrl: "/image/aya.png" },
     { id: 3, name: "Ana Reyes", year: "3rd Year", section: "CS-301", reason: "I want to contribute to the organization's events and activities.", date: "May 10, 2025", imageUrl: "/image/aya.png" }
   ]);
+
+  // Load user data from localStorage on component mount
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      try {
+        const parsedUserData = JSON.parse(storedUserData);
+        setUserData(parsedUserData);
+      } catch (error) {
+        console.error("Error parsing user data from localStorage:", error);
+      }
+    }
+  }, []);
   
+  const handleLogout = async () => {
+    try {
+      // First sign out from Supabase auth
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during Supabase signout:", error);
+      } else {
+        console.log("Successfully signed out of Supabase");
+      }
+      
+      // Clear local storage
+      localStorage.removeItem('userData');
+      console.log("User data removed from localStorage");
+      
+      // Redirect to the index page
+      window.location.href = '/';
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Fallback if there's an error - still try to redirect
+      localStorage.removeItem('userData');
+      window.location.href = '/';
+    }
+  };
+
+  // Function to launch React AI app
+  const launchReactAiApp = () => {
+    try {
+      // Hide current body content (optional, depending on your UI)
+      document.body.classList.add('hide-content');
+      
+      // Ensure we have user data
+      const storedUserData = localStorage.getItem('userData');
+      if (!storedUserData) {
+        throw new Error('No user data found');
+      }
+
+      // Create a script element to load the AI main app
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/ai/Ai-layout.jsx';
+      
+      // Append script to body
+      document.body.appendChild(script);
+      
+      console.log('AI React app launched');
+    } catch (error) {
+      console.error('Error launching AI app:', error);
+      // Optionally show an error to the user
+      setAiError('Could not launch AI assistant');
+    }
+  };
+
+
+
+
   // Function to handle tab switching
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    // Clear any errors when switching tabs
+    setAiError(null);
   };
   
   return (
@@ -112,8 +194,8 @@ const Acss = () => {
         <div className="user-info">
           <img src="/image/logo.png" alt="User" className="user-avatar" />
           <div className="user-details">
-            <p className="user-name">ACSS Vice Aliyah</p>
-            <p className="user-role">ACSS Executive</p>
+            <p>{userData.name}</p>
+            <p className="user-role">{userData.role || 'ACSS Executive'}</p>
           </div>
         </div>
       </div>
@@ -124,7 +206,7 @@ const Acss = () => {
           <h1>ACSS Executive Dashboard</h1>
           <div className="header-actions">
             <button className="header-btn">Settings</button>
-            <button className="header-btn">Logout</button>
+            <button onClick={handleLogout}className="header-btn" >Logout</button>
           </div>
         </div>
         
@@ -312,7 +394,11 @@ const Acss = () => {
                     <div className="ai-intro">
                       <h4>ACSS AI Assistant</h4>
                       <p>Get help with organizing files, analyzing data, or answering questions about ACSS activities.</p>
-                      <button className="chat-btn">Start Chat</button>
+                      {aiError && <p className="error-message">{aiError}</p>}
+                      <button
+                        onClick={launchReactAiApp}
+                        
+                        style={{ marginLeft: 'auto' }} className="chat-btn">Start Chat</button>
                     </div>
                   </div>
                 </div>
@@ -407,6 +493,18 @@ const Acss = () => {
         )}
       </div>
     </div>
+  );
+};
+
+const Acss = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<AcssContent />} />
+        {/* You might want to add a dedicated route for the AI assistant */}
+        {/* <Route path="/ai-assistant" element={<AiAssistant />} /> */}
+      </Routes>
+    </Router>
   );
 };
 

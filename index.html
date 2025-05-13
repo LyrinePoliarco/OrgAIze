@@ -238,7 +238,7 @@
 }
 
   </style>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css" rel="stylesheet">
 </head>
@@ -250,22 +250,19 @@
       <!-- Main View with Login Form -->
       <div id="login-container" class="auth-container" style="display: flex;">
         <h2>Login to NEU orgAIze</h2>
-     <!-- OAuth Login Buttons -->
-<div class="oauth-buttons">
-  <button id="google-login" class="oauth-button">
-    <ion-icon name="logo-google"></ion-icon>
-    <span>Continue with Google</span>
-  </button>
-</div>
-
+        <!-- OAuth Login Buttons -->
+        <div class="oauth-buttons">
+          <button id="google-login" class="oauth-button">
+            <ion-icon name="logo-google"></ion-icon>
+            <span>Continue with Google</span>
+          </button>
+        </div>
         
         <!-- Loading spinner for login -->
         <div id="login-spinner" class="loading-spinner"></div>
         <!-- Error message for login -->
         <div id="login-error" class="error-message"></div>
         
-       
-     
         <!-- Loading spinner for signup -->
         <div id="signup-spinner" class="loading-spinner"></div>
         <!-- Error message for signup -->
@@ -288,44 +285,52 @@
     const loginContainer = document.getElementById('login-container');
     const authWrapper = document.getElementById('auth-wrapper');
     const rootElement = document.getElementById('root');
-    
-    
+
     // Check for OAuth callback and existing session on page load
     window.addEventListener('DOMContentLoaded', async () => {
       try {
+        // Add console logging for debugging
+        console.log('Page loaded, checking authentication state');
+        
         // First, check if this is a OAuth redirect callback
         const hash = window.location.hash;
         const query = window.location.search;
         
         if (hash.includes('access_token') || query.includes('code=')) {
-          // Process the OAuth callback
-          document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">Processing login, please wait...</div>';
+          console.log('OAuth callback detected', { hash, query });
+          // Process the OAuth callback but keep original elements
+          // const loadingDiv = document.createElement('div');
+          // loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.9);display:flex;justify-content:center;align-items:center;z-index:9999;font-family:sans-serif;';
+          // loadingDiv.innerHTML = '<div>Processing login, please wait...</div>';
+          // document.body.appendChild(loadingDiv);
           
-          const { data, error } = await supabase.auth.getSession();
+          // Handle the OAuth session exchange
+          const { data: authData, error: authError } = await supabase.auth.getSession();
           
-          if (error) {
-            console.error('Error during OAuth callback:', error);
-            window.location.href = '/'; // Redirect to login page on error
+          console.log('Auth session result:', { authData, authError });
+          
+          if (authError) {
+            console.error('Error during OAuth callback:', authError);
+            alert('Authentication error: ' + (authError.message || 'Unknown error'));
+            window.location.href = ''; // Redirect to login page on error
             return;
           }
           
-          if (data.session) {
-            const userData = {
-              email: data.session.user.email,
-              name: data.session.user.user_metadata?.name || data.session.user.email.split('@')[0],
-              id: data.session.user.id,
-              isAuthenticated: true,
-              loginTime: new Date().toISOString()
-            };
-            
-            // Store user data and launch app
-            localStorage.setItem('userData', JSON.stringify(userData));
-            window.location.href = '/'; // Redirect to the app's main page
+          if (authData && authData.session) {
+            console.log('Session established, navigating user');
+            // Fetch user's role from the database
+            await getUserRoleAndNavigate(authData.session.user);
             return;
+          } else {
+            // No session after callback
+            console.error('No session data after OAuth callback');
+            alert('Login failed: No session data received');
+            loadingDiv.remove();
           }
         }
         
         // Normal session check
+        console.log('Checking for existing session');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -333,21 +338,16 @@
           return;
         }
         
-        if (data.session) {
+        if (data && data.session) {
           console.log('Existing session found:', data.session);
-          
-          const userData = {
-            email: data.session.user.email,
-            name: data.session.user.user_metadata?.name || data.session.user.email.split('@')[0],
-            id: data.session.user.id,
-            isAuthenticated: true,
-            loginTime: new Date().toISOString()
-          };
-          
-          launchReactApp(userData);
+          // Fetch user's role and navigate accordingly
+          await getUserRoleAndNavigate(data.session.user);
+        } else {
+          console.log('No existing session found, showing login form');
         }
       } catch (error) {
         console.error('Error during auth initialization:', error);
+        alert('Error during authentication: ' + (error.message || 'Unknown error'));
       }
     });
     
@@ -363,7 +363,7 @@
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: ``,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent'
@@ -381,26 +381,139 @@
       }
     });
     
-   
+    // Add a global logout function that can be called later
+    window.logoutUser = async () => {
+      try {
+        await supabase.auth.signOut();
+        localStorage.removeItem('userData');
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    };
+    
+    // Function to get user role and navigate to appropriate page
+    async function getUserRoleAndNavigate(user) {
+      try {
+        console.log('Getting user role for:', user);
+        
+        // Query the users table to get the user's role
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('roles')
+          .eq('id', user.id)
+          .single();
+        
+        console.log('User data query result:', { userData, userError });
+        
+        if (userError) {
+          console.error('Error fetching user role:', userError);
+          // Default to student if we can't determine role
+          const defaultUserData = {
+            email: user.email,
+            name: user.user_metadata?.name || user.email.split('@')[0],
+            id: user.id,
+            roles: 'student', // Default role
+            isAuthenticated: true,
+            loginTime: new Date().toISOString()
+          };
+          
+          console.log('Using default user data:', defaultUserData);
+          launchReactApp(defaultUserData, 'student');
+          return;
+        }
+        
+        // User data with role information
+        const completeUserData = {
+          email: user.email,
+          name: user.user_metadata?.name || user.email.split('@')[0],
+          id: user.id,
+          roles: userData.roles || 'student', // Default to student if role is null
+          isAuthenticated: true,
+          loginTime: new Date().toISOString()
+        };
+        
+        console.log('Complete user data:', completeUserData);
+        
+        // Store user data
+        localStorage.setItem('userData', JSON.stringify(completeUserData));
+        
+        // Route based on role - Fix: Use completeUserData.roles instead of completeUserData.role
+        const role = (completeUserData.roles || 'student').toLowerCase();
+        console.log('Using role for routing:', role);
+        
+        switch (role) {
+          case 'student':
+            launchReactApp(completeUserData, 'student');
+            break;
+          case 'executive':
+            launchReactApp(completeUserData, 'executive');
+            break;
+          default:
+            // Default to student layout if role is unknown
+            console.log('Unknown role, defaulting to student:', role);
+            launchReactApp(completeUserData, 'student');
+        }
+        
+      } catch (error) {
+        console.error('Error in getUserRoleAndNavigate:', error);
+        alert('Error loading user data: ' + (error.message || 'Unknown error'));
+        
+        // Default to student on error
+        const fallbackUserData = {
+          email: user.email,
+          name: user.user_metadata?.name || user.email.split('@')[0],
+          id: user.id,
+          roles: 'student',
+          isAuthenticated: true,
+          loginTime: new Date().toISOString()
+        };
+        
+        console.log('Using fallback user data due to error:', fallbackUserData);
+        launchReactApp(fallbackUserData, 'student');
+      }
+    }
     
     // Launch React app and hide authentication
-    function launchReactApp(userData) {
+    function launchReactApp(userData, role) {
+      console.log('Launching React app with role:', role);
+      
+      // Hide any loading overlays that might be present
+      const loadingElements = document.querySelectorAll('[style*="position:fixed"]');
+      loadingElements.forEach(el => el.remove());
+      
       // Hide authentication UI
       authWrapper.style.display = 'none';
       
       // Show React app container
       rootElement.style.display = 'block';
       
-      // Store user data in localStorage for React app to access
-      localStorage.setItem('userData', JSON.stringify(userData));
-      
-      // Load React app script
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = '/src/dashboards/Student-layout.jsx';
-      document.body.appendChild(script);
-      
-      console.log('React app launched with user:', userData);
+      try {
+        // Load appropriate React app script based on role
+        console.log('Loading script for role:', role);
+        const script = document.createElement('script');
+        script.type = 'module';
+        
+        if (role === 'executive') {
+          script.src = '/src/dashboards/Acss-layout.jsx';
+        } else {
+          // Default to student layout
+          script.src = '/src/dashboards/Student-layout.jsx';
+        }
+        
+        // Add error handling to script loading
+        script.onerror = (err) => {
+          console.error('Error loading dashboard script:', err);
+          alert('Failed to load dashboard. Please refresh the page or contact support.');
+        };
+        
+        document.body.appendChild(script);
+        
+        console.log(`React app launched with user role: ${role}`, userData);
+      } catch (error) {
+        console.error('Error in launchReactApp:', error);
+        alert('Error launching application: ' + (error.message || 'Unknown error'));
+      }
     }
   </script>
 </body>

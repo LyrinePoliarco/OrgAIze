@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "./Student.css";
-import ReactDOM from 'react-dom/client';
-// import "../../config/vite.config.js";
-
 import supabase from '../../lib/supabaseClient.js';
 
 const StudentContent = () => {
@@ -112,7 +109,7 @@ const StudentContent = () => {
       // Create a script element to load the AI main app
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = '/src/ai/main.jsx';
+      script.src = '/src/ai/Ai-layout.jsx';
       
       // Append script to body
       document.body.appendChild(script);
@@ -158,8 +155,8 @@ return (
     {userData && (
       <div className="user-header">
         <div className="user-welcome">
-          <h3>Welcome, {userData.name}!</h3>
-          <p>{userData.email}</p>
+          <h1>Hello, {userData.name}!</h1>
+          {/* <p>{userData.email}</p> */}
         </div>
         <button
           onClick={launchReactAiApp} // 🔁 DIRECTLY LAUNCHES THE AI APP
