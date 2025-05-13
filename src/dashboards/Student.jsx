@@ -385,7 +385,7 @@ return (
   );
 };
 
-const student = () => {
+const Student = () => {
   return (
     <Router>
       <Routes>
@@ -398,4 +398,4 @@ const student = () => {
   );
 };
 
-export default student;
+export default Student;
