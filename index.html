@@ -232,17 +232,53 @@
       margin-left: 10px;
     }
     .oauth-button ion-icon {
-  font-size: 20px;
-  margin-right: 8px;
-  vertical-align: middle;
-}
+      font-size: 20px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
 
+    /* Full-screen loading overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    .loading-overlay .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(196, 18, 48, 0.2);
+      border-top: 5px solid #c41230;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .loading-overlay p {
+      font-size: 16px;
+      color: #333;
+    }
   </style>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css" rel="stylesheet">
 </head>
 <body>
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Logging you in...</p>
+  </div>
+
   <div id="auth-wrapper">
     <div class="container">
       <img src="/neu.png" alt="" class="neu-logo">
@@ -258,15 +294,8 @@
           </button>
         </div>
         
-        <!-- Loading spinner for login -->
-        <div id="login-spinner" class="loading-spinner"></div>
         <!-- Error message for login -->
         <div id="login-error" class="error-message"></div>
-        
-        <!-- Loading spinner for signup -->
-        <div id="signup-spinner" class="loading-spinner"></div>
-        <!-- Error message for signup -->
-        <div id="signup-error" class="error-message"></div>
       </div>
     </div>
   </div>
@@ -285,11 +314,21 @@
     const loginContainer = document.getElementById('login-container');
     const authWrapper = document.getElementById('auth-wrapper');
     const rootElement = document.getElementById('root');
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // Show loading screen
+    function showLoading() {
+      loadingOverlay.style.display = 'flex';
+    }
+
+    // Hide loading screen
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
 
     // Check for OAuth callback and existing session on page load
     window.addEventListener('DOMContentLoaded', async () => {
       try {
-        // Add console logging for debugging
         console.log('Page loaded, checking authentication state');
         
         // First, check if this is a OAuth redirect callback
@@ -298,11 +337,8 @@
         
         if (hash.includes('access_token') || query.includes('code=')) {
           console.log('OAuth callback detected', { hash, query });
-          // Process the OAuth callback but keep original elements
-          // const loadingDiv = document.createElement('div');
-          // loadingDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.9);display:flex;justify-content:center;align-items:center;z-index:9999;font-family:sans-serif;';
-          // loadingDiv.innerHTML = '<div>Processing login, please wait...</div>';
-          // document.body.appendChild(loadingDiv);
+          // Show loading overlay immediately on callback detection
+          showLoading();
           
           // Handle the OAuth session exchange
           const { data: authData, error: authError } = await supabase.auth.getSession();
@@ -311,25 +347,26 @@
           
           if (authError) {
             console.error('Error during OAuth callback:', authError);
+            hideLoading();
             alert('Authentication error: ' + (authError.message || 'Unknown error'));
             window.location.href = ''; // Redirect to login page on error
             return;
           }
           
           if (authData && authData.session) {
-            console.log('Session established, navigating user');
-            // Fetch user's role from the database
+            console.log('Session established, navigating user directly to dashboard');
+            // Fetch user's role from the database and navigate directly
             await getUserRoleAndNavigate(authData.session.user);
             return;
           } else {
             // No session after callback
+            hideLoading();
             console.error('No session data after OAuth callback');
             alert('Login failed: No session data received');
-            loadingDiv.remove();
           }
         }
         
-        // Normal session check
+        // Normal session check (not a callback)
         console.log('Checking for existing session');
         const { data, error } = await supabase.auth.getSession();
         
@@ -340,13 +377,20 @@
         
         if (data && data.session) {
           console.log('Existing session found:', data.session);
+          // Show loading for returning users with session
+          showLoading();
           // Fetch user's role and navigate accordingly
           await getUserRoleAndNavigate(data.session.user);
         } else {
           console.log('No existing session found, showing login form');
+          // Clear any URL parameters to avoid confusion on refresh
+          if (window.location.search || window.location.hash) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         }
       } catch (error) {
-        console.error('Error during auth initialization:', error);
+        hideLoading();
+        console.error('Error during authentication:', error);
         alert('Error during authentication: ' + (error.message || 'Unknown error'));
       }
     });
@@ -354,16 +398,16 @@
     // OAuth Login Handler
     document.getElementById('google-login').addEventListener('click', async () => {
       try {
-        const loginSpinner = document.getElementById('login-spinner');
         const loginError = document.getElementById('login-error');
         
-        loginSpinner.style.display = 'block';
+        // Show loading overlay before starting OAuth flow
+        showLoading();
         loginError.textContent = '';
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: ``,
+            redirectTo: `${window.location.origin}${window.location.pathname}`,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent'
@@ -371,12 +415,15 @@
           }
         });
         
-        if (error) throw error;
+        if (error) {
+          hideLoading();
+          throw error;
+        }
         
         // The user will be redirected away from the page at this point
       } catch (error) {
+        hideLoading();
         console.error('Google login error:', error);
-        document.getElementById('login-spinner').style.display = 'none';
         document.getElementById('login-error').textContent = error.message || 'Error signing in with Google';
       }
     });
@@ -406,21 +453,41 @@
         
         console.log('User data query result:', { userData, userError });
         
+        let userRoles = 'student'; // Default role
+        
         if (userError) {
-          console.error('Error fetching user role:', userError);
-          // Default to student if we can't determine role
-          const defaultUserData = {
-            email: user.email,
-            name: user.user_metadata?.name || user.email.split('@')[0],
-            id: user.id,
-            roles: 'student', // Default role
-            isAuthenticated: true,
-            loginTime: new Date().toISOString()
-          };
+          console.log('User not found in users table, checking if new user');
           
-          console.log('Using default user data:', defaultUserData);
-          launchReactApp(defaultUserData, 'student');
-          return;
+          // This might be a new user - check if we need to create a record
+          if (userError.code === 'PGRST116') { // Record not found
+            console.log('New user detected, creating user record with default role');
+            
+            // Create a new user record with default role
+            const { data: newUser, error: createError } = await supabase
+              .from('users')
+              .insert([
+                { 
+                  id: user.id,
+                  email: user.email,
+                  name: user.user_metadata?.name || user.email.split('@')[0],
+                  roles: 'student' // Default role for new users
+                }
+              ])
+              .select();
+              
+            if (createError) {
+              console.error('Error creating new user record:', createError);
+            } else {
+              console.log('Created new user record:', newUser);
+              userRoles = 'student';
+            }
+          } else {
+            console.error('Error fetching user role:', userError);
+          }
+        } else if (userData) {
+          // Use the role from the database
+          userRoles = userData.roles || 'student';
+          console.log('Found existing user with roles:', userRoles);
         }
         
         // User data with role information
@@ -428,7 +495,7 @@
           email: user.email,
           name: user.user_metadata?.name || user.email.split('@')[0],
           id: user.id,
-          roles: userData.roles || 'student', // Default to student if role is null
+          roles: userRoles,
           isAuthenticated: true,
           loginTime: new Date().toISOString()
         };
@@ -438,24 +505,11 @@
         // Store user data
         localStorage.setItem('userData', JSON.stringify(completeUserData));
         
-        // Route based on role - Fix: Use completeUserData.roles instead of completeUserData.role
-        const role = (completeUserData.roles || 'student').toLowerCase();
-        console.log('Using role for routing:', role);
-        
-        switch (role) {
-          case 'student':
-            launchReactApp(completeUserData, 'student');
-            break;
-          case 'executive':
-            launchReactApp(completeUserData, 'executive');
-            break;
-          default:
-            // Default to student layout if role is unknown
-            console.log('Unknown role, defaulting to student:', role);
-            launchReactApp(completeUserData, 'student');
-        }
+        // Launch the React app with user data
+        launchReactApp(completeUserData);
         
       } catch (error) {
+        hideLoading();
         console.error('Error in getUserRoleAndNavigate:', error);
         alert('Error loading user data: ' + (error.message || 'Unknown error'));
         
@@ -470,47 +524,64 @@
         };
         
         console.log('Using fallback user data due to error:', fallbackUserData);
-        launchReactApp(fallbackUserData, 'student');
+        launchReactApp(fallbackUserData);
       }
     }
     
     // Launch React app and hide authentication
-    function launchReactApp(userData, role) {
-      console.log('Launching React app with role:', role);
-      
-      // Hide any loading overlays that might be present
-      const loadingElements = document.querySelectorAll('[style*="position:fixed"]');
-      loadingElements.forEach(el => el.remove());
-      
-      // Hide authentication UI
-      authWrapper.style.display = 'none';
-      
-      // Show React app container
-      rootElement.style.display = 'block';
+    function launchReactApp(userData) {
+      console.log('Launching React app with role:', userData.roles);
       
       try {
+        // Hide authentication UI
+        authWrapper.style.display = 'none';
+        
+        // Show React app container
+        rootElement.style.display = 'block';
+        
         // Load appropriate React app script based on role
-        console.log('Loading script for role:', role);
+        console.log('Loading script for role:', userData.roles);
         const script = document.createElement('script');
         script.type = 'module';
         
-        if (role === 'executive') {
-          script.src = '/src/dashboards/Acss-layout.jsx';
-        } else {
-          // Default to student layout
-          script.src = '/src/dashboards/Student-layout.jsx';
+        // Simple routing based on the exact roles value from the database
+        switch (userData.roles) {
+          case 'executive':
+            script.src = '/src/dashboards/Acss-layout.jsx';
+            break;
+          case 'admin':
+            script.src = '/src/dashboards/Admin-layout.jsx';
+            break;
+          case 'ACSS':
+            script.src = '/src/dashboards/AcssStudent-layout.jsx';
+            break;
+          case 'student':
+          default:
+            // Default to student layout for any unknown roles
+            script.src = '/src/dashboards/Student-layout.jsx';
+            break;
         }
         
         // Add error handling to script loading
         script.onerror = (err) => {
+          hideLoading();
           console.error('Error loading dashboard script:', err);
           alert('Failed to load dashboard. Please refresh the page or contact support.');
         };
         
+        // Add onload handler to hide loading overlay once React is initialized
+        script.onload = () => {
+          // Hide loading overlay after a short delay to allow React to initialize
+          setTimeout(() => {
+            hideLoading();
+          }, 800);
+        };
+        
         document.body.appendChild(script);
         
-        console.log(`React app launched with user role: ${role}`, userData);
+        console.log(`React app launched with user role: ${userData.roles}`, userData);
       } catch (error) {
+        hideLoading();
         console.error('Error in launchReactApp:', error);
         alert('Error launching application: ' + (error.message || 'Unknown error'));
       }

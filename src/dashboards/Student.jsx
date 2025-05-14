@@ -8,8 +8,10 @@ const StudentContent = () => {
   const [pendingMemberships, setPendingMemberships] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [userData, setUserData] = useState(null);
-
-
+  const [user, setUser] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const [aiError, setAiError] = useState('');
 
   // Existing useEffect for loading user data
   useEffect(() => {
@@ -26,6 +28,18 @@ const StudentContent = () => {
       console.warn("No user data found, redirecting to login...");
       window.location.href = '/';
     }
+  }, []);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setUser(user);
+    };
+    getUser();
   }, []);
 
   // Sample organization data
@@ -94,7 +108,7 @@ const StudentContent = () => {
     setSelectedOrg(null);
   };
   
- // Function to launch React AI app
+  // Function to launch React AI app
   const launchReactAiApp = () => {
     try {
       // Hide current body content (optional, depending on your UI)
@@ -121,8 +135,67 @@ const StudentContent = () => {
       setAiError('Could not launch AI assistant');
     }
   };
+  
+  const handleJoinAndLaunch = async (org) => {
+  if (!user) {
+    setError('User not authenticated');
+    return;
+  }
 
- 
+  setIsProcessing(true);
+
+  try {
+    // First step: Insert into student_roles
+    const { error: insertError } = await supabase.from('student_roles').insert([
+      {
+        user_id: user.id,
+        role: org.name,
+        confirm: false,
+      }
+    ]);
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+
+    console.log(`Successfully joined ${org.name}`);
+
+    // Second step: Update the user's role in the users table
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ roles: org.name })
+      .eq('id', user.id);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    console.log(`User role updated to ${org.name}`);
+
+    // Third step: Launch the dashboard
+    document.body.classList.add('hide-content');
+
+    const storedUserData = localStorage.getItem('userData');
+    if (!storedUserData) {
+      throw new Error('No user data found');
+    }
+
+    const dashboardPath = `/src/dashboards/${org.name}Student-layout.jsx`;
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = dashboardPath;
+    document.body.appendChild(script);
+
+    console.log(`${org.name}Student React app launched`);
+
+  } catch (error) {
+    console.error('Error in join and launch process:', error);
+    setError(error.message || 'Failed to join organization');
+    setIsProcessing(false);
+  }
+};
+
 
   // Function to handle logout
   const handleLogout = async () => {
@@ -149,29 +222,29 @@ const StudentContent = () => {
       window.location.href = '/';
     }
   };
-return (
-  <div className="dashboard-container">
-    {/* Header with User Info */}
-    {userData && (
-      <div className="user-header">
-        <div className="user-welcome">
-          <h1>Hello, {userData.name}!</h1>
-          {/* <p>{userData.email}</p> */}
+
+  return (
+    <div className="dashboard-container">
+      {/* Header with User Info */}
+      {userData && (
+        <div className="user-header">
+          <div className="user-welcome">
+            <h1>Hello, {userData.name}!</h1>
+            {/* <p>{userData.email}</p> */}
+          </div>
+          <button
+            onClick={launchReactAiApp}
+            className="chat-with-orgaiize-button"
+            style={{ marginLeft: 'auto' }}
+          >
+            Chat with OrgAIze
+          </button>
+          <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
-        <button
-          onClick={launchReactAiApp} // 🔁 DIRECTLY LAUNCHES THE AI APP
-          className="chat-with-orgaiize-button"
-          style={{ marginLeft: 'auto' }}
-        >
-          Chat with OrgAIze
-        </button>
-        <button onClick={handleLogout} className="logout-button">Logout</button>
-      </div>
-    )}
+      )}
 
       {/* Welcome Section */}
       <div className="welcome-section">
-  
         {/* Background image behind the whole section */}
         <img 
           src="/welcome.PNG" 
@@ -184,7 +257,7 @@ return (
           <p>
             Get ready to level up your student life at New Era University's College of Information and Computing Studies! 🚀<br /><br />
   
-            <strong>NEU orgAIze</strong> is your all-in-one hub for everything related to student organizations. Stay updated with the latest <strong>events 📅, activities 🕹️ ,  announcements 📢, birthday celebrants 🍰,  and file management 📂</strong> — all in one place!<br /><br />
+            <strong>NEU orgAIze</strong> is your all-in-one hub for everything related to student organizations. Stay updated with the latest <strong>events 📅, activities 🕹️, announcements 📢, birthday celebrants 🍰, and file management 📂</strong> — all in one place!<br /><br />
   
             Meet your organization's <strong>officers 🧑‍💼 and fellow members 🤝</strong>, explore what each group has to offer, and find your perfect fit. Whether you're into tech, arts, leadership, or community service, there's a place here for you! 💡💻🎭<br /><br />
   
@@ -200,13 +273,12 @@ return (
             className="logo-image" 
           />
         </div>
-        
       </div>
    
       {/* Organizations Section */}
       <div className="section-header">
-      <h2>🔍 Explore CICS Student Organizations</h2>
-      <p>Find your organization here! Get involved, stay inspired✨🤝</p>
+        <h2>🔍 Explore CICS Student Organizations</h2>
+        <p>Find your organization here! Get involved, stay inspired✨🤝</p>
       </div>
 
       <div className="organizations-grid">
@@ -275,7 +347,6 @@ return (
           <h3>🌟 Transform Your University Experience Today</h3>
           <p>NEU orgAIze brings powerful tools and a vibrant community to help you thrive throughout your academic journey.</p>
           <button className="download-app-btn">Join Now!</button>
-          
         </div>
       </div>
         
@@ -362,18 +433,36 @@ return (
                 <p>Office: Building {Math.floor(Math.random() * 5) + 1}, Room {Math.floor(Math.random() * 100) + 100}</p>
                 <p>Faculty Advisor: Dr. {["Smith", "Johnson", "Williams", "Garcia", "Martinez"][Math.floor(Math.random() * 5)]}</p>
               </div>
-              
-              <div className="modal-actions">
-                <button 
-                  className={`membership-button ${pendingMemberships.includes(selectedOrg.id) ? 'pending' : ''}`}
-                  onClick={() => handleMembershipRequest(selectedOrg.id)}
-                  disabled={pendingMemberships.includes(selectedOrg.id)}
-                >
-                  {pendingMemberships.includes(selectedOrg.id) ? 'Pending Approval' : 'Request Membership'}
-                </button>
-              </div>
+
+            <div className="modal-actions">
+  <button 
+    style={{
+      textAlign: 'center',
+      backgroundColor: selectedOrg.color,
+      fontSize: '16px',
+      color: 'white',
+      border: 'none',
+      padding: '10px 20px',
+      borderRadius: '5px'
+    }}
+    className="join-and-launch-button" 
+    onClick={() => handleJoinAndLaunch(selectedOrg)}
+    disabled={isProcessing}
+  >
+    {isProcessing ? 'Processing...' : `Join ${selectedOrg.name} Organization`}
+  </button>
+
+  {error && <p className="error-message">{error}</p>}
+</div>
+
             </div>
           </div>
+        </div>
+      )}
+      
+      {aiError && (
+        <div className="error-message">
+          {aiError}
         </div>
       )}
     </div>
