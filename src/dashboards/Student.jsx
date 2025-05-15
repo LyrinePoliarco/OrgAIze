@@ -406,11 +406,7 @@ const launchOrganizationDashboard = (orgName) => {
           </div>
         </div>
 
-        <div className="app-cta">
-          <h3>🌟 Transform Your University Experience Today</h3>
-          <p>NEU orgAIze brings powerful tools and a vibrant community to help you thrive throughout your academic journey.</p>
-          <button className="download-app-btn">Join Now!</button>
-        </div>
+      
       </div>
         
       {/* Recent Activity Section */}

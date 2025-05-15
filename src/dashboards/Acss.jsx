@@ -100,7 +100,8 @@ const AcssContent = () => {
         const { data, error } = await supabase
           .from('student_roles')
           .select('*')
-          .eq('confirm', false) // Only get unconfirmed requests
+          .eq('confirm', false) 
+          // Only get unconfirmed requests
           // Only get ACSS role requests
         
         if (error) {
@@ -112,8 +113,8 @@ const AcssContent = () => {
           const formattedRequests = data.map(request => ({
             id: request.id,
             user_id: request.user_id,
-            name: request.student_name || 'Unknown Student',
-            email: request.student_email || 'No email provided',
+            // name: request.student_name || 'Unknown Student',
+            email: request.email || 'No email provided',
             date: new Date(request.created_at).toLocaleDateString(),
             isLoading: false
           }));
@@ -186,6 +187,7 @@ const AcssContent = () => {
         .from('student_roles')
         .update({ confirm: true })
         .eq('user_id', requestId)
+        .eq('email', request.email) // Ensure the email matches
         .select();
 
       if (error) {
@@ -688,7 +690,7 @@ const AcssContent = () => {
                       {joinRequests.map(req => (
                         <div key={req.user_id} className="join-request-item">
                           <div className="request-info">
-                            <h4>{req.name}</h4>
+                            {/* <h4>{req.name}</h4> */}
                             <p>{req.email}</p>
                             <p className="request-date">Requested on: {req.date}</p>
                           </div>
