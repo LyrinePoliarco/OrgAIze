@@ -527,65 +527,73 @@
         launchReactApp(fallbackUserData);
       }
     }
+ // Launch React app and hide authentication
+function launchReactApp(userData) {
+  console.log('Launching React app with role:', userData.roles);
+  
+  try {
+    // Hide authentication UI
+    authWrapper.style.display = 'none';
     
-    // Launch React app and hide authentication
-    function launchReactApp(userData) {
-      console.log('Launching React app with role:', userData.roles);
-      
-      try {
-        // Hide authentication UI
-        authWrapper.style.display = 'none';
-        
-        // Show React app container
-        rootElement.style.display = 'block';
-        
-        // Load appropriate React app script based on role
-        console.log('Loading script for role:', userData.roles);
-        const script = document.createElement('script');
-        script.type = 'module';
-        
-        // Simple routing based on the exact roles value from the database
-        switch (userData.roles) {
-          case 'executive':
-            script.src = '/src/dashboards/Acss-layout.jsx';
-            break;
-          case 'admin':
-            script.src = '/src/dashboards/Admin-layout.jsx';
-            break;
-          case 'ACSS':
-            script.src = '/src/dashboards/AcssStudent-layout.jsx';
-            break;
-          case 'student':
-          default:
-            // Default to student layout for any unknown roles
-            script.src = '/src/dashboards/Student-layout.jsx';
-            break;
+    // Show React app container
+    rootElement.style.display = 'block';
+    
+    // Load appropriate React app script based on role
+    console.log('Loading script for role:', userData.roles);
+    const script = document.createElement('script');
+    script.type = 'module';
+    
+    // Simple routing based on the exact roles value from the database
+    switch (userData.roles) {
+      case 'executive':
+        script.src = '/src/dashboards/Acss-layout.jsx';
+        break;
+      case 'admin':
+        script.src = '/src/dashboards/Admin-layout.jsx';
+        break;
+      case 'ACSS':
+        // Check if confirm button status is TRUE or FALSE for ACSS role
+        if (userData.confirmStatus === true) {
+          // If confirmed, load the ACSS student layout
+          script.src = '/src/dashboards/AcssStudent-layout.jsx';
+        } else {
+          // If not confirmed, load the regular student layout with waiting approval notice
+          script.src = '/src/dashboards/Student-layout.jsx';
+          // Set a flag that can be used in the Student layout to show "waiting approval" message
+          window.acssWaitingApproval = true;
         }
-        
-        // Add error handling to script loading
-        script.onerror = (err) => {
-          hideLoading();
-          console.error('Error loading dashboard script:', err);
-          alert('Failed to load dashboard. Please refresh the page or contact support.');
-        };
-        
-        // Add onload handler to hide loading overlay once React is initialized
-        script.onload = () => {
-          // Hide loading overlay after a short delay to allow React to initialize
-          setTimeout(() => {
-            hideLoading();
-          }, 800);
-        };
-        
-        document.body.appendChild(script);
-        
-        console.log(`React app launched with user role: ${userData.roles}`, userData);
-      } catch (error) {
-        hideLoading();
-        console.error('Error in launchReactApp:', error);
-        alert('Error launching application: ' + (error.message || 'Unknown error'));
-      }
+        break;
+      case 'student':
+      default:
+        // Default to student layout for any unknown roles
+        script.src = '/src/dashboards/Student-layout.jsx';
+        break;
     }
+    
+    // Add error handling to script loading
+    script.onerror = (err) => {
+      hideLoading();
+      console.error('Error loading dashboard script:', err);
+      alert('Failed to load dashboard. Please refresh the page or contact support.');
+    };
+    
+    // Add onload handler to hide loading overlay once React is initialized
+    script.onload = () => {
+      // Hide loading overlay after a short delay to allow React to initialize
+      setTimeout(() => {
+        hideLoading();
+      }, 800);
+    };
+    
+    document.body.appendChild(script);
+    
+    console.log(`React app launched with user role: ${userData.roles}`, userData);
+  } catch (error) {
+    hideLoading();
+    console.error('Error in launchReactApp:', error);
+    alert('Error launching application: ' + (error.message || 'Unknown error'));
+  }
+}
   </script>
 </body>
 </html>

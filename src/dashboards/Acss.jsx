@@ -24,10 +24,7 @@ const AcssContent = () => {
   const [activeTab, setActiveTab] = useState('home');
   
   // State for user data
-  const [userData, setUserData] = useState({
-    name: 'Default User',
-    role: 'ACSS Executive'
-  });
+  const [userData, setUserData] = useState({});
   
   // State for AI error
   const [aiError, setAiError] = useState(null);
@@ -73,24 +70,62 @@ const AcssContent = () => {
     { id: 8, name: "Thoby Jim R. Ralleta", year: "4th Year", role: "Information Committee Chairman", imageUrl: "/image/aya.png" }
   ]);
   
-  // Mock data for join requests
-  const [joinRequests] = useState([
-    { id: 1, name: "Maria Santos", year: "2nd Year", section: "CS-201", reason: "I want to enhance my programming skills and network with fellow CS enthusiasts.", date: "May 8, 2025", imageUrl: "/image/aya.png" },
-    { id: 2, name: "John Rivera", year: "1st Year", section: "CS-101", reason: "Looking forward to participating in technical workshops and hackathons.", date: "May 9, 2025", imageUrl: "/image/aya.png" },
-    { id: 3, name: "Ana Reyes", year: "3rd Year", section: "CS-301", reason: "I want to contribute to the organization's events and activities.", date: "May 10, 2025", imageUrl: "/image/aya.png" }
-  ]);
+  // Updated Join Requests state with loading indicator for each request
+  const [joinRequests, setJoinRequests] = useState([]);
+  
+  // State to track success or error messages
+  const [acceptanceStatus, setAcceptanceStatus] = useState({
+    id: null,
+    message: '',
+    isError: false
+  });
 
   // Load user data from localStorage on component mount
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
       try {
-        const parsedUserData = JSON.parse(storedUserData);
-        setUserData(parsedUserData);
+        setUserData(JSON.parse(storedUserData));
       } catch (error) {
-        console.error("Error parsing user data from localStorage:", error);
+        console.error('Error parsing user data:', error);
       }
     }
+  }, []);
+
+  // Fetch join requests from Supabase
+  useEffect(() => {
+    const fetchJoinRequests = async () => {
+      try {
+        // Query student_roles table for unconfirmed join requests
+        const { data, error } = await supabase
+          .from('student_roles')
+          .select('*')
+          .eq('confirm', false) // Only get unconfirmed requests
+          // Only get ACSS role requests
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Format the data for our component
+          const formattedRequests = data.map(request => ({
+            id: request.id,
+            user_id: request.user_id,
+            name: request.student_name || 'Unknown Student',
+            email: request.student_email || 'No email provided',
+            date: new Date(request.created_at).toLocaleDateString(),
+            isLoading: false
+          }));
+          
+          setJoinRequests(formattedRequests);
+        }
+      } catch (error) {
+        console.error('Error fetching join requests:', error);
+      }
+    };
+    
+    fetchJoinRequests();
   }, []);
   
   const handleLogout = async () => {
@@ -115,6 +150,172 @@ const AcssContent = () => {
       // Fallback if there's an error - still try to redirect
       localStorage.removeItem('userData');
       window.location.href = '/';
+    }
+  };
+
+  const handleAcceptRequest = async (requestId) => {
+    if (!requestId || typeof requestId !== 'string') {
+      console.error('Invalid requestId:', requestId);
+      setAcceptanceStatus({
+        id: null,
+        message: 'Invalid request ID provided.',
+        isError: true
+      });
+      setTimeout(() => {
+        setAcceptanceStatus({ id: null, message: '', isError: false });
+      }, 3000);
+      return;
+    }
+
+    try {
+      // Set loading state for the specific request
+      setJoinRequests(requests => 
+        requests.map(req => 
+          req.user_id === requestId ? { ...req, isLoading: true } : req
+        )
+      );
+
+      // Find the request data
+      const request = joinRequests.find(req => req.user_id === requestId);
+      if (!request) {
+        throw new Error('Request not found');
+      }
+
+      // Update the student_roles table using user_id as the key
+      const { data, error } = await supabase
+        .from('student_roles')
+        .update({ confirm: true })
+        .eq('user_id', requestId)
+        .select();
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Request accepted successfully:', data);
+
+      // Remove the accepted request from the list
+      setJoinRequests(requests => requests.filter(req => req.user_id !== requestId));
+
+      // Set success message
+      setAcceptanceStatus({
+        id: requestId,
+        message: `${request.name} has been successfully accepted into ACSS!`,
+        isError: false
+      });
+
+      // Clear the success message after 3 seconds
+      setTimeout(() => {
+        setAcceptanceStatus({ id: null, message: '', isError: false });
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error accepting request:', error);
+
+      // Reset loading state for the failed request
+      setJoinRequests(requests => 
+        requests.map(req => 
+          req.user_id === requestId ? { ...req, isLoading: false } : req
+        )
+      );
+
+      // Find the failed request
+      const request = joinRequests.find(req => req.user_id === requestId);
+
+      // Set error message
+      setAcceptanceStatus({
+        id: requestId,
+        message: `Failed to accept ${request?.name || 'member'}: ${error.message}`,
+        isError: true
+      });
+
+      // Clear the error message after 3 seconds
+      setTimeout(() => {
+        setAcceptanceStatus({ id: null, message: '', isError: false });
+      }, 3000);
+    }
+  };
+
+  // Add the missing handleDeclineRequest function
+  const handleDeclineRequest = async (requestId) => {
+    if (!requestId || typeof requestId !== 'string') {
+      console.error('Invalid requestId:', requestId);
+      setAcceptanceStatus({
+        id: null,
+        message: 'Invalid request ID provided.',
+        isError: true
+      });
+      setTimeout(() => {
+        setAcceptanceStatus({ id: null, message: '', isError: false });
+      }, 3000);
+      return;
+    }
+
+    try {
+      // Set loading state for the specific request
+      setJoinRequests(requests => 
+        requests.map(req => 
+          req.user_id === requestId ? { ...req, isLoading: true } : req
+        )
+      );
+
+      // Find the request data
+      const request = joinRequests.find(req => req.user_id === requestId);
+      if (!request) {
+        throw new Error('Request not found');
+      }
+
+      // Delete the record from student_roles table
+      const { error } = await supabase
+        .from('student_roles')
+        .delete()
+        .eq('user_id', requestId);
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Request declined successfully');
+
+      // Remove the declined request from the list
+      setJoinRequests(requests => requests.filter(req => req.user_id !== requestId));
+
+      // Set success message
+      setAcceptanceStatus({
+        id: requestId,
+        message: `${request.name}'s request has been declined.`,
+        isError: false
+      });
+
+      // Clear the success message after 3 seconds
+      setTimeout(() => {
+        setAcceptanceStatus({ id: null, message: '', isError: false });
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error declining request:', error);
+
+      // Reset loading state for the failed request
+      setJoinRequests(requests => 
+        requests.map(req => 
+          req.user_id === requestId ? { ...req, isLoading: false } : req
+        )
+      );
+
+      // Find the failed request
+      const request = joinRequests.find(req => req.user_id === requestId);
+
+      // Set error message
+      setAcceptanceStatus({
+        id: requestId,
+        message: `Failed to decline ${request?.name || 'member'}: ${error.message}`,
+        isError: true
+      });
+
+      // Clear the error message after 3 seconds
+      setTimeout(() => {
+        setAcceptanceStatus({ id: null, message: '', isError: false });
+      }, 3000);
     }
   };
 
@@ -145,9 +346,6 @@ const AcssContent = () => {
       setAiError('Could not launch AI assistant');
     }
   };
-
-
-
 
   // Function to handle tab switching
   const handleTabChange = (tab) => {
@@ -206,7 +404,7 @@ const AcssContent = () => {
           <h1>ACSS Executive Dashboard</h1>
           <div className="header-actions">
             <button className="header-btn">Settings</button>
-            <button onClick={handleLogout}className="header-btn" >Logout</button>
+            <button onClick={handleLogout} className="header-btn">Logout</button>
           </div>
         </div>
         
@@ -397,8 +595,11 @@ const AcssContent = () => {
                       {aiError && <p className="error-message">{aiError}</p>}
                       <button
                         onClick={launchReactAiApp}
-                        
-                        style={{ marginLeft: 'auto' }} className="chat-btn">Start Chat</button>
+                        style={{ marginLeft: 'auto' }} 
+                        className="chat-btn"
+                      >
+                        Start Chat
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -461,31 +662,56 @@ const AcssContent = () => {
                   <h3><FaUserPlus className="panel-icon" /> ACSS Join Requests</h3>
                 </div>
                 <div className="panel-content">
-                  {joinRequests.map(request => (
-                    <div key={request.id} className="join-request-card">
-                      <div className="request-header">
-                        <div className="requestor-info">
-                          <img src={request.imageUrl} alt={request.name} className="requestor-img" />
-                          <div>
-                            <h4>{request.name}</h4>
-                            <p>{request.year} • {request.section}</p>
+                  {/* Display acceptance status message */}
+                  {acceptanceStatus.message && (
+                    <div 
+                      className={`status-message ${acceptanceStatus.isError ? 'error' : 'success'}`}
+                      style={{
+                        padding: '10px',
+                        margin: '0 0 15px 0',
+                        borderRadius: '5px',
+                        backgroundColor: acceptanceStatus.isError ? '#ffebee' : '#e8f5e9',
+                        color: acceptanceStatus.isError ? '#c62828' : '#2e7d32',
+                        border: `1px solid ${acceptanceStatus.isError ? '#ef9a9a' : '#a5d6a7'}`
+                      }}
+                    >
+                      {acceptanceStatus.message}
+                    </div>
+                  )}
+                  
+                  {joinRequests.length === 0 ? (
+                    <div className="no-requests-message">
+                      <p>No pending join requests at this time.</p>
+                    </div>
+                  ) : (
+                    <div className="join-requests-list">
+                      {joinRequests.map(req => (
+                        <div key={req.user_id} className="join-request-item">
+                          <div className="request-info">
+                            <h4>{req.name}</h4>
+                            <p>{req.email}</p>
+                            <p className="request-date">Requested on: {req.date}</p>
+                          </div>
+                          <div className="request-actions">
+                            <button 
+                              className="action-btn accept"
+                              onClick={() => handleAcceptRequest(req.user_id)}
+                              disabled={req.isLoading}
+                            >
+                              {req.isLoading ? 'Processing...' : 'Accept'}
+                            </button>
+                            <button 
+                              className="action-btn decline"
+                              onClick={() => handleDeclineRequest(req.user_id)}
+                              disabled={req.isLoading}
+                            >
+                              {req.isLoading ? 'Processing...' : 'Decline'}
+                            </button>
                           </div>
                         </div>
-                        <span className="request-date">{request.date}</span>
-                      </div>
-                      
-                      <div className="request-reason">
-                        <p><strong>Reason for joining:</strong></p>
-                        <p>{request.reason}</p>
-                      </div>
-                      
-                      <div className="request-actions">
-                        <button className="action-btn accept">Accept</button>
-                        <button className="action-btn decline">Decline</button>
-                        <button className="action-btn view-profile">View Profile</button>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>

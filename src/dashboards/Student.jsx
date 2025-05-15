@@ -12,6 +12,13 @@ const StudentContent = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [aiError, setAiError] = useState('');
+  
+// Add a new state for tracking confirmation status at the top with other states
+const [organizationStatus, setOrganizationStatus] = useState({
+  role: null,
+  confirmed: false
+});
+
 
   // Existing useEffect for loading user data
   useEffect(() => {
@@ -41,6 +48,43 @@ const StudentContent = () => {
     };
     getUser();
   }, []);
+
+  useEffect(() => {
+  const checkConfirmationStatus = async () => {
+    if (user) {
+      try {
+        // Query the student_roles table to check confirmation status
+        const { data, error } = await supabase
+          .from('student_roles')
+          .select('role, confirm')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching confirmation status:", error);
+          return;
+        }
+
+        if (data) {
+          setOrganizationStatus({
+            role: data.role,
+            confirmed: data.confirm
+          });
+          
+          // If confirmed, launch the dashboard
+          if (data.confirm) {
+            launchOrganizationDashboard(data.role);
+          }
+        }
+      } catch (err) {
+        console.error("Error checking confirmation status:", err);
+      }
+    }
+  };
+
+  checkConfirmationStatus();
+}, [user]);
+
 
   // Sample organization data
   const organizations = [
@@ -150,7 +194,8 @@ const StudentContent = () => {
       {
         user_id: user.id,
         role: org.name,
-        confirm: false,
+        confirm: false, // Setting confirm to false as required
+        email: user.email,
       }
     ]);
 
@@ -172,22 +217,14 @@ const StudentContent = () => {
 
     console.log(`User role updated to ${org.name}`);
 
-    // Third step: Launch the dashboard
-    document.body.classList.add('hide-content');
-
-    const storedUserData = localStorage.getItem('userData');
-    if (!storedUserData) {
-      throw new Error('No user data found');
-    }
-
-    const dashboardPath = `/src/dashboards/${org.name}Student-layout.jsx`;
-
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = dashboardPath;
-    document.body.appendChild(script);
-
-    console.log(`${org.name}Student React app launched`);
+    // Instead of launching the dashboard, show "Wait for confirmation" message
+    // Add a new state to track confirmation status
+    setPendingMemberships([...pendingMemberships, org.id]);
+    closeOrgModal(); // Close the modal after joining
+    
+    // Show confirmation message
+    setIsProcessing(false);
+    alert(`You have successfully joined ${org.name}. Please wait for confirmation from the organization executives.`);
 
   } catch (error) {
     console.error('Error in join and launch process:', error);
@@ -196,6 +233,23 @@ const StudentContent = () => {
   }
 };
 
+const launchOrganizationDashboard = (orgName) => {
+  try {
+    document.body.classList.add('hide-content');
+
+    const dashboardPath = `/src/dashboards/${orgName}Student-layout.jsx`;
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = dashboardPath;
+    document.body.appendChild(script);
+
+    console.log(`${orgName}Student React app launched`);
+  } catch (error) {
+    console.error(`Error launching ${orgName} dashboard:`, error);
+    setError(`Failed to load ${orgName} dashboard`);
+  }
+};
 
   // Function to handle logout
   const handleLogout = async () => {
@@ -281,34 +335,43 @@ const StudentContent = () => {
         <p>Find your organization here! Get involved, stay inspired✨🤝</p>
       </div>
 
-      <div className="organizations-grid">
-        {organizations.map((org) => (
-          <div 
-            className="org-card clickable" 
-            key={org.id}
-            style={{ 
-              "--org-color": org.color 
-            }}
-            onClick={() => openOrgModal(org)}
-          >
-            <div 
-              className="org-image" 
-              style={{ 
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url(${org.imgUrl})` 
-              }}
-            >
-              <div className="org-badge">{org.name}</div>
-            </div>
-            <div className="org-content">
-              <h3>{org.fullName}</h3>
-              <p>{org.description}</p>
-              <div className="card-footer">
-                <span className="view-more">Click to view more</span>
-              </div>
-            </div>
+    <div className="organizations-grid">
+  {organizations.map((org) => {
+    const isPending = organizationStatus.role === org.name && !organizationStatus.confirmed;
+    
+    return (
+      <div 
+        className={`org-card ${isPending ? 'pending-org' : 'clickable'}`} 
+        key={org.id}
+        style={{ 
+          "--org-color": org.color 
+        }}
+        onClick={isPending ? null : () => openOrgModal(org)}
+      >
+        <div 
+          className="org-image" 
+          style={{ 
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url(${org.imgUrl})` 
+          }}
+        >
+          <div className="org-badge">{org.name}</div>
+          {isPending && <div className="pending-badge">Pending</div>}
+        </div>
+        <div className="org-content">
+          <h3>{org.fullName}</h3>
+          <p>{org.description}</p>
+          <div className="card-footer">
+            {isPending ? (
+              <span className="pending-status">Waiting for approval</span>
+            ) : (
+              <span className="view-more">Click to view more</span>
+            )}
           </div>
-        ))}
+        </div>
       </div>
+    );
+  })}
+</div>
 
       {/* App Features Section */}
       <div className="app-features-section">
