@@ -151,14 +151,14 @@ const AcssOrgChart = () => {
     <div className="dashboard-container">
       {/* Welcome Section */}
       <div className="welcome-section">
-        <img src="/api/placeholder/1200/300" alt="background" className="welcome-bg-image" />
+        <img src="/image/org1.png" alt="background" className="welcome-bg-image" />
         <div className="welcome-content">
           <h1>ACSS Organizational Chart</h1>
           <p>Association of Computer Science Students (ACSS) at New Era University College of Informatics and Computing Studies for Academic Year 2024-2025.</p>
         </div>
         <div className="welcome-graphic">
           <div className="pulse-circle"></div>
-          <img src="/api/placeholder/150/150" alt="ACSS Logo" className="logo-image" />
+          <img src="/image/logo.png" alt="ACSS Logo" className="logo-image" />
         </div>
       </div>
 

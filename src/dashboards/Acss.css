@@ -802,3 +802,56 @@ body {
 .meeting-link-info a:hover {
   text-decoration: underline;
 }
+
+.celebrant-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.celebrant-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.meeting-link-item {
+  margin-bottom: 10px;
+}
+.meeting-link-item input {
+  margin-right: 10px;
+  padding: 4px;
+}
+
+.birthday-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.celebrant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: #f9f9f9;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.celebrant-item input[type="text"],
+.celebrant-item input[type="date"] {
+  margin-right: 10px;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+}
+
+.panel-actions-inline button {
+  margin-left: 5px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.panel-actions-inline button:hover {
+  color: #007BFF;
+}

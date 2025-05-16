@@ -1,408 +1,757 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import AcssOrgChart from './AcssOrgChart';
 import './Acss.css';
+import { FaHome, FaFile, FaUsers, FaBullhorn, FaBirthdayCake, FaLink, FaSitemap, 
+  FaCloudUploadAlt, FaRobot, FaUserPlus, FaUsersCog, FaEdit, FaSave, 
+  FaBold, FaItalic, FaUnderline, FaListUl, FaListOl, FaAlignLeft, FaAlignCenter, FaAlignRight } from 'react-icons/fa';
+import supabase from '../../lib/supabaseClient.js';
+import { v4 as uuidv4 } from 'uuid';
 
-// Placeholder icons (replace with actual imports later)
-import { 
-  FaHome, 
-  FaFile, 
-  FaUsers, 
-  FaBullhorn, 
-  FaBirthdayCake, 
-  FaLink, 
-  FaSitemap, 
-  FaCloudUploadAlt, 
-  FaRobot, 
-  FaUserPlus, 
-  FaUsersCog
-} from 'react-icons/fa';
 
+
+//State Declaration of Supabase
 const Acss = () => {
-  // State for active tab
   const [activeTab, setActiveTab] = useState('home');
-  
-  // States for editable content
-  const [orgDescription, setOrgDescription] = useState(
-    "The Association of Computer Science Students (ACSS) at New Era University is dedicated to fostering academic excellence and professional growth in the field of computing. Founded in 2005, ACSS has been a platform for students to explore and enhance their skills beyond the classroom."
+  const [organizationId, setOrganizationId] = useState(null);
+
+  const [orgDescription, setOrgDescription] = useState("");
+  const [orgImageUrl, setOrgImageUrl] = useState("/image/org1.png");
+  const [announcement, setAnnouncement] = useState("");
+  const [files, setFiles] = useState([]);
+
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [birthdayCelebrants, setBirthdayCelebrants] = useState([]);
+  const [meetingLinks, setMeetingLinks] = useState([]);
+
+  // Rich text editor states
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isUnderlined, setIsUnderlined] = useState(false);
+  const [textAlign, setTextAlign] = useState('left');
+
+  const [editingCelebrants, setEditingCelebrants] = useState(false);
+  const [editingMeetings, setEditingMeetings] = useState(false);
+
+  const [isEditingCelebrants, setIsEditingCelebrants] = useState({});
+
+
+  const handleSaveMeetingLinks = async () => {
+  setIsUploading(true);
+  const { error } = await supabase
+    .from("organization_details")
+    .update({ 
+      meeting_links: meetingLinks, 
+      updated_at: new Date() 
+    })
+    .eq("organization_id", organizationId);
+
+  if (error) {
+    console.error("Meeting links update error:", error.message);
+    alert("Failed to save meeting links. Please try again.");
+  } else {
+    alert("Meeting links saved!");
+  }
+
+  setEditingMeetings(false);
+  setIsUploading(false);
+};
+
+const addBirthdayCelebrant = () => {
+  const newCelebrant = { id: uuidv4(), name: '', birthday: '' };
+  setBirthdayCelebrants(prev => [...prev, newCelebrant]);
+  setIsEditingCelebrants(prev => ({ ...prev, [newCelebrant.id]: true }));
+};
+
+const updateCelebrant = (id, updatedField, value) => {
+  setBirthdayCelebrants(prev =>
+    prev.map(c =>
+      c.id === id ? { ...c, [updatedField]: value } : c
+    )
   );
-  
-  const [announcement, setAnnouncement] = useState(
-    "Welcome to the new ACSS Executive Dashboard! This platform will help us collaborate better and keep everyone informed about upcoming events and activities."
+};
+
+const saveBirthdayCelebrant = async (id) => {
+  const updated = birthdayCelebrants.find(c => c.id === id);
+  const newList = birthdayCelebrants.map(c =>
+    c.id === id ? updated : c
   );
-  
-  // Mock data for birthday celebrants
-  const [birthdayCelebrants] = useState([
-    { id: 1, name: "Faye Camille Buri", date: "May 15", imageUrl: "/image/faye.png" },
-    { id: 2, name: "Etienne Banquil", date: "May 22", imageUrl: "/image/eti.png" }
-  ]);
-  
-  // Mock data for meeting links
-  const [meetingLinks] = useState([
-    { id: 1, title: "Weekly General Assembly", url: "https://meet.google.com/abc-defg-hij", date: "Every Friday, 4:00 PM" },
-    { id: 2, title: "Executive Committee Meeting", url: "https://meet.google.com/xyz-abcd-efg", date: "Every Wednesday, 5:30 PM" },
-    { id: 3, title: "Technical Workshop Series", url: "https://meet.google.com/123-456-789", date: "May 18, 2:00 PM" }
-  ]);
-  
-  // Mock data for files
-  const [files] = useState([
-    { id: 1, name: "ACSS Constitution.pdf", size: "1.2 MB", uploadedBy: "Faye Camille Buri", date: "April 10, 2025", isHidden: false },
-    { id: 2, name: "Event Calendar 2025.xlsx", size: "540 KB", uploadedBy: "Aliyah Aira A. Llana", date: "April 15, 2025", isHidden: true },
-    { id: 3, name: "Technical Workshop Materials.zip", size: "15.7 MB", uploadedBy: "Julius Albert D. Ortiz", date: "April 20, 2025", isHidden: false }
-  ]);
-  
-  // Mock data for members
-  const [members] = useState([
-    { id: 1, name: "Faye Camille Buri", year: "4th Year", role: "President", imageUrl: "/image/aya.png" },
-    { id: 2, name: "Aliyah Aira A. Llana", year: "4th Year", role: "Vice President (Internal)", imageUrl: "/image/aya.png" },
-    { id: 3, name: "Julius Albert D. Ortiz", year: "4th Year", role: "Vice President (External)", imageUrl: "/image/aya.png" },
-    { id: 4, name: "Pia Katleya V. Macalanda", year: "3rd Year", role: "Secretary", imageUrl: "/image/aya.png" },
-    { id: 5, name: "Ricky Joe V. Sanglay", year: "3rd Year", role: "Asst. Secretary", imageUrl: "/image/aya.png" },
-    { id: 6, name: "Bai Sakina B. Abad", year: "4th Year", role: "Academic Committee Chairman", imageUrl: "/image/aya.png" },
-    { id: 7, name: "Juliana R. Mancera", year: "3rd Year", role: "Documentation Committee Chairman", imageUrl: "/image/aya.png" },
-    { id: 8, name: "Thoby Jim R. Ralleta", year: "4th Year", role: "Information Committee Chairman", imageUrl: "/image/aya.png" }
-  ]);
-  
-  // Mock data for join requests
-  const [joinRequests] = useState([
-    { id: 1, name: "Maria Santos", year: "2nd Year", section: "CS-201", reason: "I want to enhance my programming skills and network with fellow CS enthusiasts.", date: "May 8, 2025", imageUrl: "/image/aya.png" },
-    { id: 2, name: "John Rivera", year: "1st Year", section: "CS-101", reason: "Looking forward to participating in technical workshops and hackathons.", date: "May 9, 2025", imageUrl: "/image/aya.png" },
-    { id: 3, name: "Ana Reyes", year: "3rd Year", section: "CS-301", reason: "I want to contribute to the organization's events and activities.", date: "May 10, 2025", imageUrl: "/image/aya.png" }
-  ]);
-  
-  // Function to handle tab switching
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
+
+  const { error } = await supabase
+    .from('organization_details')
+    .update({ birthday_celebrants: newList })
+    .eq('organization_id', organizationId);
+
+  if (error) {
+    console.error('Error saving celebrant:', error.message);
+  } else {
+    setIsEditingCelebrants(prev => ({ ...prev, [id]: false }));
+  }
+};
+
+const saveAllBirthdayCelebrants = async () => {
+  const { error } = await supabase
+    .from('organization_details')
+    .update({ birthday_celebrants: birthdayCelebrants })
+    .eq('organization_id', organizationId);
+
+  if (error) {
+    console.error('Error saving celebrants:', error.message);
+    alert("Failed to save birthday celebrants.");
+  } else {
+    alert("Birthday celebrants saved!");
+    setEditingCelebrants(false);
+  }
+};
+
+
+const deleteBirthdayCelebrant = async (id) => {
+  const newList = birthdayCelebrants.filter(c => c.id !== id);
+
+  const { error } = await supabase
+    .from('organization_details')
+    .update({ birthday_celebrants: newList })
+    .eq('organization_id', organizationId);
+
+  if (error) {
+    console.error('Error deleting celebrant:', error.message);
+  } else {
+    setBirthdayCelebrants(newList);
+    const updatedEditingState = { ...isEditingCelebrants };
+    delete updatedEditingState[id];
+    setIsEditingCelebrants(updatedEditingState);
+  }
+};
+
+
+
+const handleCelebrantChange = (index, key, value) => {
+  const updated = [...birthdayCelebrants];
+  updated[index][key] = value;
+  setBirthdayCelebrants(updated);
+};
+
+const handleMeetingLinkChange = (index, key, value) => {
+  const updated = [...meetingLinks];
+  updated[index][key] = value;
+  setMeetingLinks(updated);
+};
+
+const handleAddMeetingLink = () => {
+  setMeetingLinks([...meetingLinks, { name: "", url: "" }]);
+};
+
+const handleRemoveMeetingLink = (index) => {
+  const updated = [...meetingLinks];
+  updated.splice(index, 1);
+  setMeetingLinks(updated);
+};
+
+
+  useEffect(() => {
+    const fetchUserOrgId = async () => {
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error("Auth error:", userError.message);
+        return;
+      }
+
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Failed to fetch user organization:", error.message);
+      } else {
+        setOrganizationId(userData.organization_id);
+      }
+    };
+
+    fetchUserOrgId();
+  }, []);
+
+  useEffect(() => {
+    if (!organizationId) return;
+
+    const fetchOrgDetails = async () => {
+      const { data, error } = await supabase
+        .from('organization_details')
+        .select('*')
+        .eq("organization_id", organizationId)
+        .single();
+
+      if (data) {
+        setOrgDescription(data.description || "");
+        setAnnouncement(data.announcement || "");
+        if (data.image_url) {
+          setOrgImageUrl(data.image_url);
+        }
+        
+        try {
+          setMeetingLinks(data.meeting_links || []);
+        } catch (e) {
+          console.error("Invalid JSON in meeting_links", e);
+        }
+      } else {
+        console.error("Org details fetch error:", error?.message);
+      }
+    };
+
+    fetchOrgDetails();
+  }, [organizationId]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+
+    const fetchFiles = async () => {
+      const { data, error } = await supabase
+        .from("files")
+        .select("id, file_name, file_url, uploaded_by, is_hidden, uploaded_at")
+        .eq("organization_id", organizationId)
+        .order("uploaded_at", { ascending: false });
+
+      if (data) {
+        const formatted = data.map(file => ({
+          id: file.id,
+          name: file.file_name,
+          size: "N/A",
+          uploadedBy: file.uploaded_by || "Unknown",
+          date: new Date(file.uploaded_at).toLocaleDateString(),
+          isHidden: file.is_hidden
+        }));
+        setFiles(formatted);
+      } else {
+        console.error("File fetch error:", error?.message);
+      }
+    };
+
+    // Fetch birthday celebrants
+    const fetchBirthdayCelebrants = async () => {
+  const { data, error } = await supabase
+    .from('organization_details')
+    .select('birthday_celebrants')
+    .eq('organization_id', organizationId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching birthday celebrants:', error.message);
+    return;
+  }
+
+  setBirthdayCelebrants(data?.birthday_celebrants || []);
+};
+
+
+    fetchFiles();
+    fetchBirthdayCelebrants();
+  }, [organizationId]);
+
+  const handleTabChange = (tab) => setActiveTab(tab);
+
+  const handleSaveDescription = async () => {
+    setIsUploading(true);
+    
+    const { error } = await supabase
+      .from("organization_details")
+      .update({ 
+        description: orgDescription,
+        updated_at: new Date()
+      })
+      .eq("organization_id", organizationId);
+      
+    if (error) {
+      console.error("Description update error:", error.message);
+      alert("Failed to save description. Please try again.");
+    } else {
+      // Success feedback
+      const savedElement = document.getElementById('saved-feedback-desc');
+      if (savedElement) {
+        savedElement.style.opacity = 1;
+        setTimeout(() => {
+          savedElement.style.opacity = 0;
+        }, 2000);
+      }
+    }
+    
+    setIsUploading(false);
+    setEditingDescription(false);
   };
-  
+
+  const handleSaveAnnouncement = async () => {
+    setIsUploading(true);
+    
+    const { error } = await supabase
+      .from("organization_details")
+      .update({ 
+        announcement: announcement,
+        updated_at: new Date()
+      })
+      .eq("organization_id", organizationId);
+      
+    if (error) {
+      console.error("Announcement update error:", error.message);
+      alert("Failed to save announcement. Please try again.");
+    } else {
+      // Success feedback
+      const savedElement = document.getElementById('saved-feedback-announce');
+      if (savedElement) {
+        savedElement.style.opacity = 1;
+        setTimeout(() => {
+          savedElement.style.opacity = 0;
+        }, 2000);
+      }
+    }
+    
+    setIsUploading(false);
+    setEditingAnnouncement(false);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    
+    // Create a unique file name
+    const fileExt = file.name.split('.').pop();
+    const fileName = `org-${organizationId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `organizations/${fileName}`;
+    
+    // Upload image to Storage
+    const { error: uploadError } = await supabase.storage
+      .from('organization_images')
+      .upload(filePath, file);
+      
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      alert("Failed to upload image. Please try again.");
+      setIsUploading(false);
+      return;
+    }
+    
+    // Get public URL for the uploaded image
+    const { data: urlData } = supabase.storage
+      .from('organization_images')
+      .getPublicUrl(filePath);
+      
+    if (urlData) {
+      const imageUrl = urlData.publicUrl;
+      
+      // Update the organization_details with the new image URL
+      const { error: updateError } = await supabase
+        .from('organization_details')
+        .update({ 
+          image_url: imageUrl,
+          updated_at: new Date()
+        })
+        .eq('organization_id', organizationId);
+        
+      if (updateError) {
+        console.error('Error updating organization with image URL:', updateError);
+      } else {
+        setOrgImageUrl(imageUrl);
+      }
+    }
+    
+    setIsUploading(false);
+  };
+
+  // Rich text editor functions
+  const toggleBold = () => setIsBold(!isBold);
+  const toggleItalic = () => setIsItalic(!isItalic);
+  const toggleUnderline = () => setIsUnderlined(!isUnderlined);
+  const setAlign = (alignment) => setTextAlign(alignment);
+
+  // Function to apply formatting to selected text
+  const formatSelectedText = (formatType) => {
+    const textarea = document.getElementById('announcement-textarea');
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = announcement.substring(start, end);
+    
+    let formattedText = selectedText;
+    let prefix = '';
+    let suffix = '';
+    
+    switch(formatType) {
+      case 'bold':
+        prefix = '<strong>';
+        suffix = '</strong>';
+        break;
+      case 'italic':
+        prefix = '<em>';
+        suffix = '</em>';
+        break;
+      case 'underline':
+        prefix = '<u>';
+        suffix = '</u>';
+        break;
+      default:
+        break;
+    }
+    
+    const newText = 
+      announcement.substring(0, start) + 
+      prefix + selectedText + suffix + 
+      announcement.substring(end);
+    
+    setAnnouncement(newText);
+    
+    // Restore focus and selection after state update
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
+
+  if (!organizationId) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="acss-dashboard">
-      {/* Sidebar */}
       <div className="sidebar">
         <div className="logo-container">
           <img src="/image/logo.png" alt="ACSS Logo" className="logo" />
           <h2>ACSS</h2>
         </div>
-        
         <div className="nav-links">
-          <button 
-            className={`nav-link ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={() => handleTabChange('home')}
-          >
-            <FaHome className="nav-icon" />
-            <span>Home</span>
+          <button className={`nav-link ${activeTab === 'home' ? 'active' : ''}`} onClick={() => handleTabChange('home')}>
+            <FaHome className="nav-icon" /><span>Home</span>
           </button>
-          
-          <button 
-            className={`nav-link ${activeTab === 'files' ? 'active' : ''}`}
-            onClick={() => handleTabChange('files')}
-          >
-            <FaFile className="nav-icon" />
-            <span>Files</span>
+          <button className={`nav-link ${activeTab === 'files' ? 'active' : ''}`} onClick={() => handleTabChange('files')}>
+            <FaFile className="nav-icon" /><span>Files</span>
           </button>
-          
-          <button 
-            className={`nav-link ${activeTab === 'members' ? 'active' : ''}`}
-            onClick={() => handleTabChange('members')}
-          >
-            <FaUsers className="nav-icon" />
-            <span>Member Access</span>
+          <button className={`nav-link ${activeTab === 'members' ? 'active' : ''}`} onClick={() => handleTabChange('members')}>
+            <FaUsers className="nav-icon" /><span>Member Access</span>
           </button>
-        </div>
-        
-        <div className="user-info">
-          <img src="/image/logo.png" alt="User" className="user-avatar" />
-          <div className="user-details">
-            <p className="user-name">ACSS Vice Aliyah</p>
-            <p className="user-role">ACSS Executive</p>
-          </div>
         </div>
       </div>
-      
-      {/* Main Content */}
+
       <div className="main-content">
         <div className="header">
           <h1>ACSS Executive Dashboard</h1>
-          <div className="header-actions">
-            <button className="header-btn">Settings</button>
-            <button className="header-btn">Logout</button>
-          </div>
         </div>
-        
-        {/* Home Tab Content */}
+
         {activeTab === 'home' && (
           <div className="tab-content">
-            <h2>Home</h2>
-            
             <div className="panels-grid">
-              {/* Organization Description Panel */}
               <div className="panel">
                 <div className="panel-header">
-                  <h3><FaBullhorn className="panel-icon" /> Organization Description</h3>
-                  <button className="edit-btn">Edit</button>
+                  <h3><FaBullhorn /> Organization Description</h3>
+                  <div className="panel-actions">
+                    {!editingDescription ? (
+                      <button className="edit-btn" onClick={() => setEditingDescription(true)}>
+                        <FaEdit /> Edit
+                      </button>
+                    ) : (
+                      <div className="save-container">
+                        <button 
+                          className={`save-btn ${isUploading ? 'loading' : ''}`} 
+                          onClick={handleSaveDescription}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
+                        </button>
+                        <span id="saved-feedback-desc" className="saved-feedback">Saved!</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="panel-content org-description">
+                  <div className="org-image-container">
+                    <img src={orgImageUrl} alt="Organization" className="org-image" />
+                    {editingDescription && (
+                      <div className="image-upload-overlay">
+                        <label htmlFor="org-image-upload" className="image-upload-label">
+                          <FaCloudUploadAlt /> Change Image
+                        </label>
+                        <input 
+                          type="file" 
+                          id="org-image-upload" 
+                          accept="image/*" 
+                          onChange={handleImageUpload}
+                          disabled={isUploading}
+                          style={{ display: 'none' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <textarea
+                    disabled={!editingDescription}
+                    value={orgDescription}
+                    onChange={(e) => setOrgDescription(e.target.value)}
+                    className={`editable-textarea ${editingDescription ? 'active' : ''}`}
+                    placeholder="Enter your organization description here..."
+                  />
+                </div>
+              </div>
+
+              <div className="panel">
+                <div className="panel-header">
+                  <h3><FaBullhorn /> Announcement</h3>
+                  <div className="panel-actions">
+                    {!editingAnnouncement ? (
+                      <button className="edit-btn" onClick={() => setEditingAnnouncement(true)}>
+                        <FaEdit /> Edit
+                      </button>
+                    ) : (
+                      <div className="save-container">
+                        <button 
+                          className={`save-btn ${isUploading ? 'loading' : ''}`} 
+                          onClick={handleSaveAnnouncement}
+                          disabled={isUploading}
+                        >
+                          {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
+                        </button>
+                        <span id="saved-feedback-announce" className="saved-feedback">Saved!</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="panel-content">
-                  <div className="org-description">
-                    <img src="/image/org.png" alt="Organization" className="org-image" />
-                    <div 
-                      className="editable-content" 
-                      contentEditable="true"
-                      onBlur={(e) => setOrgDescription(e.target.innerText)}
-                      suppressContentEditableWarning={true}
-                    >
-                      {orgDescription}
+                  {editingAnnouncement && (
+                    <div className="rich-text-toolbar">
+                      <button 
+                        className={`toolbar-btn ${isBold ? 'active' : ''}`} 
+                        onClick={() => formatSelectedText('bold')}
+                        title="Bold"
+                      >
+                        <FaBold />
+                      </button>
+                      <button 
+                        className={`toolbar-btn ${isItalic ? 'active' : ''}`} 
+                        onClick={() => formatSelectedText('italic')}
+                        title="Italic"
+                      >
+                        <FaItalic />
+                      </button>
+                      <button 
+                        className={`toolbar-btn ${isUnderlined ? 'active' : ''}`} 
+                        onClick={() => formatSelectedText('underline')}
+                        title="Underline"
+                      >
+                        <FaUnderline />
+                      </button>
+                      <div className="toolbar-divider"></div>
+                      <button 
+                        className={`toolbar-btn ${textAlign === 'left' ? 'active' : ''}`}
+                        onClick={() => setAlign('left')}
+                        title="Align Left"
+                      >
+                        <FaAlignLeft />
+                      </button>
+                      <button 
+                        className={`toolbar-btn ${textAlign === 'center' ? 'active' : ''}`}
+                        onClick={() => setAlign('center')}
+                        title="Align Center"
+                      >
+                        <FaAlignCenter />
+                      </button>
+                      <button 
+                        className={`toolbar-btn ${textAlign === 'right' ? 'active' : ''}`}
+                        onClick={() => setAlign('right')}
+                        title="Align Right"
+                      >
+                        <FaAlignRight />
+                      </button>
                     </div>
-                  </div>
+                  )}
+                  
+                  {editingAnnouncement ? (
+                    <textarea
+                      id="announcement-textarea"
+                      value={announcement}
+                      onChange={(e) => setAnnouncement(e.target.value)}
+                      className={`editable-textarea ${editingAnnouncement ? 'active' : ''}`}
+                      style={{ textAlign }}
+                      placeholder="Enter your announcement here..."
+                    />
+                  ) : (
+                    <div 
+                      className="announcement-display"
+                      dangerouslySetInnerHTML={{ __html: announcement }}
+                    />
+                  )}
                 </div>
               </div>
+
               
-              {/* Announcement Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaBullhorn className="panel-icon" /> Announcement</h3>
-                  <button className="edit-btn">Edit</button>
-                </div>
-                <div className="panel-content">
-                  <div 
-                    className="editable-content" 
-                    contentEditable="true"
-                    onBlur={(e) => setAnnouncement(e.target.innerText)}
-                    suppressContentEditableWarning={true}
-                  >
-                    {announcement}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Birthday Greetings Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaBirthdayCake className="panel-icon" /> Birthday Greetings</h3>
-                  <button className="add-btn">Add Celebrant</button>
-                </div>
-                <div className="panel-content">
-                  <div className="celebrants-container">
-                    {birthdayCelebrants.map(celebrant => (
-                      <div key={celebrant.id} className="celebrant-card">
-                        <img src={celebrant.imageUrl} alt={celebrant.name} className="celebrant-img" />
-                        <div className="celebrant-info">
-                          <h4>{celebrant.name}</h4>
-                          <p>{celebrant.date}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Meeting Links Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaLink className="panel-icon" /> Meeting Links</h3>
-                  <button className="add-btn">Add Link</button>
-                </div>
-                <div className="panel-content">
-                  <div className="meeting-links">
-                    {meetingLinks.map(link => (
-                      <div key={link.id} className="meeting-link-item">
-                        <div className="meeting-link-info">
-                          <h4>{link.title}</h4>
-                          <p>{link.date}</p>
-                          <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a>
-                        </div>
-                        <div className="meeting-link-actions">
-                          <button className="action-btn edit">Edit</button>
-                          <button className="action-btn delete">Delete</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Organizational Chart Panel */}
+              {/* Birthday Celebrants Panel */}
+          <div className="panel">
+       <div className="panel-header">
+    <h3><FaBirthdayCake /> Birthday Celebrants</h3>
+    <button className="edit-btn" onClick={() => {
+  if (editingCelebrants) {
+    saveAllBirthdayCelebrants();
+  } else {
+    setEditingCelebrants(true);
+  }
+}}>
+  {editingCelebrants ? (<><FaSave /> Save Changes</>) : (<><FaEdit /> Edit</>)}
+</button>
+
+
+  </div>
+  <div className="panel-content">
+    {birthdayCelebrants.length === 0 && <p>No birthday celebrants added yet.</p>}
+    {birthdayCelebrants.map((celebrant, index) => (
+      <div key={celebrant.id} className="celebrant-item">
+        {editingCelebrants ? (
+          <>
+          <input
+           type="text"
+           value={celebrant.name}
+           onChange={(e) => updateCelebrant(celebrant.id, "name", e.target.value)}
+           placeholder="Name"
+        />
+         <input
+         type="date"
+         value={celebrant.birthday}
+          onChange={(e) => updateCelebrant(celebrant.id, "birthday", e.target.value)}
+        />
+         <button onClick={() => deleteBirthdayCelebrant(celebrant.id)}>❌</button>
+          </>
+          ) : (
+          <>
+           <strong>{celebrant.name}</strong> - {new Date(celebrant.birthday).toLocaleDateString()}
+          </>
+            )}
+
+      </div>
+    ))}
+    {editingCelebrants && (
+    <button onClick={addBirthdayCelebrant} className="add-celebrant-btn">
+      <FaUserPlus /> Add Celebrant
+    </button>
+  )}
+  </div>
+</div>
+
+
+
+{/* Meeting Links Panel */}
+<div className="panel">
+  <div className="panel-header">
+    <h3><FaLink /> Meeting Links</h3>
+    <div className="panel-actions">
+      {!editingMeetings ? (
+        <button className="edit-btn" onClick={() => setEditingMeetings(true)}>
+          <FaEdit /> Edit
+        </button>
+      ) : (
+        <div className="save-container">
+          <button 
+            className={`save-btn ${isUploading ? 'loading' : ''}`} 
+            onClick={handleSaveMeetingLinks}
+            disabled={isUploading}
+          >
+            {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+  <div className="panel-content">
+    {meetingLinks.map((link, index) => (
+      <div key={index} className="meeting-link-item">
+        {editingMeetings ? (
+          <>
+            <input
+              type="text"
+              value={link.name}
+              placeholder="Meeting Name"
+              onChange={(e) => handleMeetingLinkChange(index, 'name', e.target.value)}
+            />
+            <input
+              type="text"
+              value={link.url}
+              placeholder="Meeting URL"
+              onChange={(e) => handleMeetingLinkChange(index, 'url', e.target.value)}
+            />
+            <button onClick={() => handleRemoveMeetingLink(index)}>Remove</button>
+          </>
+        ) : (
+          <p><strong>{link.name}</strong>: <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a></p>
+        )}
+      </div>
+    ))}
+    {editingMeetings && (
+      <button onClick={handleAddMeetingLink}>+ Add Meeting Link</button>
+    )}
+            </div>
+          </div>
+
+
               <div className="panel org-chart-panel">
-                <div className="panel-header">
-                  <h3><FaSitemap className="panel-icon" /> Organizational Chart</h3>
-                </div>
-                <div className="panel-content">
-                  <AcssOrgChart />
-                </div>
+                <div className="panel-header"><h3><FaSitemap /> Organizational Chart</h3></div>
+                <div className="panel-content"><AcssOrgChart /></div>
               </div>
             </div>
           </div>
         )}
-        
-        {/* Files Tab Content */}
+
         {activeTab === 'files' && (
           <div className="tab-content">
-            <h2>Files</h2>
-            
-            <div className="panels-grid">
-              {/* Upload File Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaCloudUploadAlt className="panel-icon" /> Upload File</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="upload-area">
-                    <FaCloudUploadAlt className="upload-icon" />
-                    <p>Drag and drop files here or</p>
-                    <button className="upload-btn">Browse Files</button>
-                    <input type="file" className="file-input" hidden />
-                  </div>
-                </div>
+            <div className="panel">
+              <div className="panel-header">
+                <h3><FaFile /> Files</h3>
               </div>
-              
-              {/* Files List Panel */}
-              <div className="panel files-list-panel">
-                <div className="panel-header">
-                  <h3><FaFile className="panel-icon" /> Files</h3>
-                  <div className="search-container">
-                    <input type="text" placeholder="Search files..." className="search-input" />
-                  </div>
-                </div>
-                <div className="panel-content">
-                  <table className="files-table">
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>Uploaded By</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {files.map(file => (
+              <div className="panel-content">
+                <table className="files-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Size</th>
+                      <th>Uploaded By</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {files.length > 0 ? (
+                      files.map(file => (
                         <tr key={file.id}>
                           <td>{file.name}</td>
                           <td>{file.size}</td>
                           <td>{file.uploadedBy}</td>
                           <td>{file.date}</td>
-                          <td>
-                            <span className={`status ${file.isHidden ? 'hidden' : 'visible'}`}>
-                              {file.isHidden ? 'Hidden' : 'Visible'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="file-actions">
-                              <button className="action-btn download">Download</button>
-                              <button className="action-btn visibility">
-                                {file.isHidden ? 'Show' : 'Hide'}
-                              </button>
-                              <button className="action-btn delete">Delete</button>
-                            </div>
-                          </td>
+                          <td><span className={`status ${file.isHidden ? 'hidden' : 'visible'}`}>
+                            {file.isHidden ? 'Hidden' : 'Visible'}
+                          </span></td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* AI Chat Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaRobot className="panel-icon" /> AI Assistant</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="ai-chat-preview">
-                    <FaRobot className="ai-icon" />
-                    <div className="ai-intro">
-                      <h4>ACSS AI Assistant</h4>
-                      <p>Get help with organizing files, analyzing data, or answering questions about ACSS activities.</p>
-                      <button className="chat-btn">Start Chat</button>
-                    </div>
-                  </div>
-                </div>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="no-data">No files available</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         )}
-        
-        {/* Member Access Tab Content */}
+
         {activeTab === 'members' && (
           <div className="tab-content">
             <h2>Member Access</h2>
-            
-            <div className="panels-grid">
-              {/* ACSS Student Members Panel */}
-              <div className="panel members-panel">
-                <div className="panel-header">
-                  <h3><FaUsersCog className="panel-icon" /> ACSS Student Members</h3>
-                  <div className="search-container">
-                    <input type="text" placeholder="Search members..." className="search-input" />
-                  </div>
-                </div>
-                <div className="panel-content">
-                  <table className="members-table">
-                    <thead>
-                      <tr>
-                        <th>Member</th>
-                        <th>Year</th>
-                        <th>Role</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members.map(member => (
-                        <tr key={member.id}>
-                          <td className="member-cell">
-                            <img src={member.imageUrl} alt={member.name} className="member-avatar" />
-                            <span>{member.name}</span>
-                          </td>
-                          <td>{member.year}</td>
-                          <td>{member.role}</td>
-                          <td>
-                            <div className="member-actions">
-                              <button className="action-btn promote">
-                                {member.role.includes("President") || member.role.includes("Chairman") ? 'Demote' : 'Promote'}
-                              </button>
-                              <button className="action-btn remove">Remove</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* Join Requests Panel */}
-              <div className="panel join-requests-panel">
-                <div className="panel-header">
-                  <h3><FaUserPlus className="panel-icon" /> ACSS Join Requests</h3>
-                </div>
-                <div className="panel-content">
-                  {joinRequests.map(request => (
-                    <div key={request.id} className="join-request-card">
-                      <div className="request-header">
-                        <div className="requestor-info">
-                          <img src={request.imageUrl} alt={request.name} className="requestor-img" />
-                          <div>
-                            <h4>{request.name}</h4>
-                            <p>{request.year} • {request.section}</p>
-                          </div>
-                        </div>
-                        <span className="request-date">{request.date}</span>
-                      </div>
-                      
-                      <div className="request-reason">
-                        <p><strong>Reason for joining:</strong></p>
-                        <p>{request.reason}</p>
-                      </div>
-                      
-                      <div className="request-actions">
-                        <button className="action-btn accept">Accept</button>
-                        <button className="action-btn decline">Decline</button>
-                        <button className="action-btn view-profile">View Profile</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <p>Member management features coming soon...</p>
           </div>
         )}
       </div>
