@@ -245,6 +245,32 @@
   grid-column: span 2;
 }
 
+.join-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.join-request-item {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: var(--border-radius);
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid #4f46e5;
+}
+
+.request-info {
+  margin-bottom: 0.55rem;
+}
+
+.request-date {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.55rem;
+}
+
 .join-request-card {
   display: flex;
   flex-direction: column;
@@ -253,7 +279,7 @@
   background-color: #f9fafb;
   border-radius: var(--border-radius);
   margin-bottom: 1rem;
-  border-left: 3px solid var(--primary-color);
+  border-left: 7px solid var(--primary-color);
 }
 
 .request-header {
@@ -265,6 +291,7 @@
 .requestor-info {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .requestor-img {
@@ -280,16 +307,12 @@
   font-weight: 600;
   margin-bottom: 0.25rem;
   color: var(--text-dark);
+  justify-content: space-between;
 }
 
 .requestor-info p {
   font-size: 0.875rem;
   color: var(--text-medium);
-}
-
-.request-date {
-  font-size: 0.875rem;
-  color: var(--text-light);
 }
 
 .request-reason {
@@ -314,6 +337,63 @@
 .org-chart-panel {
   grid-column: 1 / -1;
   overflow: hidden;
+}
+
+/* Birthday Panel Styles */
+.celebrant-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.celebrant-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.meeting-link-item {
+  margin-bottom: 10px;
+}
+
+.meeting-link-item input {
+  margin-right: 10px;
+  padding: 4px;
+}
+
+.birthday-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.celebrant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: #f9f9f9;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.celebrant-item input[type="text"],
+.celebrant-item input[type="date"] {
+  margin-right: 10px;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+}
+
+.panel-actions-inline button {
+  margin-left: 5px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.panel-actions-inline button:hover {
+  color: #007BFF;
 }
 
 /* Responsive Design */
@@ -801,57 +881,4 @@ body {
 
 .meeting-link-info a:hover {
   text-decoration: underline;
-}
-
-.celebrant-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.celebrant-img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-.meeting-link-item {
-  margin-bottom: 10px;
-}
-.meeting-link-item input {
-  margin-right: 10px;
-  padding: 4px;
-}
-
-.birthday-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.celebrant-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px;
-  background: #f9f9f9;
-  margin-bottom: 5px;
-  border-radius: 5px;
-}
-
-.celebrant-item input[type="text"],
-.celebrant-item input[type="date"] {
-  margin-right: 10px;
-  padding: 5px;
-  border-radius: 3px;
-  border: 1px solid #ccc;
-}
-
-.panel-actions-inline button {
-  margin-left: 5px;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.panel-actions-inline button:hover {
-  color: #007BFF;
 }
