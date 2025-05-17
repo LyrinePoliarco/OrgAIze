@@ -771,13 +771,6 @@ body {
   flex: 1;
 }
 
-/* Organization Description Panel */
-.org-description {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .org-image {
   width: 100%;
   max-height: 200px;
@@ -881,4 +874,71 @@ body {
 
 .meeting-link-info a:hover {
   text-decoration: underline;
+}
+
+
+
+
+
+/* Organization Description Editor */
+.org-description {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.description-display {
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  min-height: 150px;
+}
+
+/* Meeting Links Styling */
+.meeting-link-item {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.meeting-link-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.meeting-link-edit {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.meeting-link-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.meeting-link-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.meeting-link-url {
+  word-break: break-all;
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.meeting-link-url:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .meeting-link-edit {
+    grid-template-columns: 1fr;
+  }
 }

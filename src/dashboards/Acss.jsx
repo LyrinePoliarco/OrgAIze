@@ -228,86 +228,79 @@ const AcssContent = () => {
   }, []);
 
   // Organization description and announcement handlers
+  // Fixed handleSaveDescription function
   const handleSaveDescription = async () => {
-    if (!organizationId) {
-      console.error("No organization ID set");
-      return;
-    }
-    setIsUploading(true);
-    
-    try {
-      const { error } = await supabase
-        .from("organization_details")
-        .upsert({ 
-          organization_id: organizationId,
-          description: orgDescription,
-          // Include other required fields to prevent null errors
-          announcement: announcement || '',
-          meeting_links: meetingLinks || [],
-          birthday_celebrants: birthdayCelebrants || [],
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'organization_id' });
-        
-      if (error) {
-        throw error;
-      }
-
-      const savedElement = document.getElementById('saved-feedback-desc');
-      if (savedElement) {
-        savedElement.style.opacity = 1;
-        setTimeout(() => {
-          savedElement.style.opacity = 0;
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Description update error:", error.message);
-      alert("Failed to save description. Please try again.");
-    } finally {
-      setIsUploading(false);
-      setEditingDescription(false);
-    }
-  };
-
-  const handleSaveAnnouncement = async () => {
-    if (!organizationId) {
-      console.error("No organization ID set");
-      return;
+  if (!organizationId) {
+    console.error("No organization ID set");
+    return;
+  }
+  setIsUploading(true);
+  
+  try {
+    const { error } = await supabase
+      .from("organization_details")
+      .update({ 
+        description: orgDescription,
+        updated_at: new Date().toISOString()
+      })
+      .eq("organization_id", organizationId);
+      
+    if (error) {
+      throw error;
     }
 
-    setIsUploading(true);
-    
-    try {
-      const { error } = await supabase
-        .from("organization_details")
-        .upsert({ 
-          organization_id: organizationId,
-          announcement: announcement,
-          // Include other fields to prevent overwriting
-          description: orgDescription || '',
-          meeting_links: meetingLinks || [],
-          birthday_celebrants: birthdayCelebrants || [],
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'organization_id' });
-        
-      if (error) {
-        throw error;
-      }
-
-      const savedElement = document.getElementById('saved-feedback-announce');
-      if (savedElement) {
-        savedElement.style.opacity = 1;
-        setTimeout(() => {
-          savedElement.style.opacity = 0;
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Announcement update error:", error.message);
-      alert("Failed to save announcement. Please try again.");
-    } finally {
-      setIsUploading(false);
-      setEditingAnnouncement(false);
+    const savedElement = document.getElementById('saved-feedback-desc');
+    if (savedElement) {
+      savedElement.style.opacity = 1;
+      setTimeout(() => {
+        savedElement.style.opacity = 0;
+      }, 2000);
     }
-  };
+  } catch (error) {
+    console.error("Description update error:", error.message);
+    alert(`Failed to save description: ${error.message}`);
+  } finally {
+    setIsUploading(false);
+    setEditingDescription(false);
+  }
+};
+
+const handleSaveAnnouncement = async () => {
+  if (!organizationId) {
+    console.error("No organization ID set");
+    return;
+  }
+
+  setIsUploading(true);
+  
+  try {
+    const { error } = await supabase
+      .from("organization_details")
+      .update({ 
+        announcement: announcement,
+        updated_at: new Date().toISOString()
+      })
+      .eq("organization_id", organizationId);
+      
+    if (error) {
+      throw error;
+    }
+
+    const savedElement = document.getElementById('saved-feedback-announce');
+    if (savedElement) {
+      savedElement.style.opacity = 1;
+      setTimeout(() => {
+        savedElement.style.opacity = 0;
+      }, 2000);
+    }
+  } catch (error) {
+    console.error("Announcement update error:", error.message);
+    alert("Failed to save announcement. Please try again.");
+  } finally {
+    setIsUploading(false);
+    setEditingAnnouncement(false);
+  }
+};
 
   // Image upload handler
   const handleImageUpload = async (e) => {
@@ -765,56 +758,111 @@ const AcssContent = () => {
             
             <div className="panels-grid">
               {/* Organization Description Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaBullhorn className="panel-icon" /> Organization Description</h3>
-                  <div className="panel-actions">
-                    {!editingDescription ? (
-                      <button className="edit-btn" onClick={() => setEditingDescription(true)}>
-                        <FaEdit /> Edit
-                      </button>
-                    ) : (
-                      <div className="save-container">
-                        <button 
-                          className={`save-btn ${isUploading ? 'loading' : ''}`} 
-                          onClick={handleSaveDescription}
-                          disabled={isUploading}
-                        >
-                          {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
-                        </button>
-                        <span id="saved-feedback-desc" className="saved-feedback">Saved!</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="panel-content org-description">
-                  <div className="org-image-container">
-                    <img src={orgImageUrl} alt="Organization" className="org-image" />
-                    {editingDescription && (
-                      <div className="image-upload-overlay">
-                        <label htmlFor="org-image-upload" className="image-upload-label">
-                          <FaCloudUploadAlt /> Change Image
-                        </label>
-                        <input 
-                          type="file" 
-                          id="org-image-upload" 
-                          accept="image/*" 
-                          onChange={handleImageUpload}
-                          disabled={isUploading}
-                          style={{ display: 'none' }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <textarea
-                    disabled={!editingDescription}
-                    value={orgDescription}
-                    onChange={(e) => setOrgDescription(e.target.value)}
-                    className={`editable-textarea ${editingDescription ? 'active' : ''}`}
-                    placeholder="Enter your organization description here..."
-                  />
-                </div>
-              </div>
+          <div className="panel">
+  <div className="panel-header">
+    <h3><FaBullhorn className="panel-icon" /> Organization Description</h3>
+    <div className="panel-actions">
+      {!editingDescription ? (
+        <button className="edit-btn" onClick={() => setEditingDescription(true)}>
+          <FaEdit /> Edit
+        </button>
+      ) : (
+        <div className="save-container">
+          <button 
+            className={`save-btn ${isUploading ? 'loading' : ''}`} 
+            onClick={handleSaveDescription}
+            disabled={isUploading}
+          >
+            {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
+          </button>
+          <span id="saved-feedback-desc" className="saved-feedback">Saved!</span>
+        </div>
+      )}
+    </div>
+  </div>
+  <div className="panel-content org-description">
+    <div className="org-image-container">
+      <img src={orgImageUrl} alt="Organization" className="org-image" />
+      {editingDescription && (
+        <div className="image-upload-overlay">
+          <label htmlFor="org-image-upload" className="image-upload-label">
+            <FaCloudUploadAlt /> Change Image
+          </label>
+          <input 
+            type="file" 
+            id="org-image-upload" 
+            accept="image/*" 
+            onChange={handleImageUpload}
+            disabled={isUploading}
+            style={{ display: 'none' }}
+          />
+        </div>
+      )}
+    </div>
+    {editingDescription && (
+      <div className="rich-text-toolbar">
+        <button 
+          className={`toolbar-btn ${isBold ? 'active' : ''}`} 
+          onClick={() => formatSelectedText('bold')}
+          title="Bold"
+        >
+          <FaBold />
+        </button>
+        <button 
+          className={`toolbar-btn ${isItalic ? 'active' : ''}`} 
+          onClick={() => formatSelectedText('italic')}
+          title="Italic"
+        >
+          <FaItalic />
+        </button>
+        <button 
+          className={`toolbar-btn ${isUnderlined ? 'active' : ''}`} 
+          onClick={() => formatSelectedText('underline')}
+          title="Underline"
+        >
+          <FaUnderline />
+        </button>
+        <div className="toolbar-divider"></div>
+        <button 
+          className={`toolbar-btn ${textAlign === 'left' ? 'active' : ''}`}
+          onClick={() => setAlign('left')}
+          title="Align Left"
+        >
+          <FaAlignLeft />
+        </button>
+        <button 
+          className={`toolbar-btn ${textAlign === 'center' ? 'active' : ''}`}
+          onClick={() => setAlign('center')}
+          title="Align Center"
+        >
+          <FaAlignCenter />
+        </button>
+        <button 
+          className={`toolbar-btn ${textAlign === 'right' ? 'active' : ''}`}
+          onClick={() => setAlign('right')}
+          title="Align Right"
+        >
+          <FaAlignRight />
+        </button>
+      </div>
+    )}
+    {editingDescription ? (
+      <textarea
+        id="description-textarea"
+        value={orgDescription}
+        onChange={(e) => setOrgDescription(e.target.value)}
+        className={`editable-textarea ${editingDescription ? 'active' : ''}`}
+        style={{ textAlign }}
+        placeholder="Enter your organization description here..."
+      />
+    ) : (
+      <div 
+        className="description-display"
+        dangerouslySetInnerHTML={{ __html: orgDescription }}
+      />
+    )}
+  </div>
+</div>
               
               {/* Announcement Panel */}
               <div className="panel">
@@ -964,76 +1012,70 @@ const AcssContent = () => {
               </div>
               
               {/* Meeting Links Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaLink className="panel-icon" /> Meeting Links</h3>
-                  <div className="panel-actions">
-                    {!editingMeetings ? (
-                      <button className="edit-btn" onClick={() => setEditingMeetings(true)}>
-                        <FaEdit /> Edit
-                      </button>
-                    ) : (
-                      <div className="save-container">
-                        <button 
-                          className={`save-btn ${isUploading ? 'loading' : ''}`} 
-                          onClick={handleSaveMeetingLinks}
-                          disabled={isUploading}
-                        >
-                          {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="panel-content">
-                  {meetingLinks.map((link, index) => (
-                    <div key={index} className="meeting-link-item">
-                      {editingMeetings ? (
-                        <>
-                          <input
-                            type="text"
-                            value={link.name}
-                            placeholder="Meeting Name"
-                            onChange={(e) => handleMeetingLinkChange(index, 'name', e.target.value)}
-                          />
-                          <input
-                            type="text"
-                            value={link.url}
-                            placeholder="Meeting URL"
-                            onChange={(e) => handleMeetingLinkChange(index, 'url', e.target.value)}
-                          />
-                          <button 
-                            className="action-btn delete"
-                            onClick={() => handleRemoveMeetingLink(index)}
-                          >
-                            Delete
-                          </button>
-                        </>
-                      ) : (
-                        <div className="meeting-link-info">
-                          <h4>{link.name}</h4>
-                          <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {editingMeetings && (
-                    <button onClick={handleAddMeetingLink} className="add-link-btn">
-                      <FaLink /> Add Meeting Link
-                    </button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Organizational Chart Panel */}
-              <div className="panel org-chart-panel">
-                <div className="panel-header">
-                  <h3><FaSitemap className="panel-icon" /> Organizational Chart</h3>
-                </div>
-                <div className="panel-content">
-                  <AcssOrgChart />
-                </div>
-              </div>
+<div className="panel">
+  <div className="panel-header">
+    <h3><FaLink className="panel-icon" /> Meeting Links</h3>
+    <div className="panel-actions">
+      {!editingMeetings ? (
+        <button className="edit-btn" onClick={() => setEditingMeetings(true)}>
+          <FaEdit /> Edit
+        </button>
+      ) : (
+        <div className="save-container">
+          <button 
+            className={`save-btn ${isUploading ? 'loading' : ''}`} 
+            onClick={handleSaveMeetingLinks}
+            disabled={isUploading}
+          >
+            {isUploading ? 'Saving...' : (<><FaSave /> Save</>)}
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+  <div className="panel-content">
+    {meetingLinks.map((link, index) => (
+      <div key={index} className="meeting-link-item">
+        {editingMeetings ? (
+          <div className="meeting-link-edit">
+            <input
+              type="text"
+              value={link.name}
+              placeholder="Meeting Name"
+              onChange={(e) => handleMeetingLinkChange(index, 'name', e.target.value)}
+              className="meeting-link-input"
+            />
+            <input
+              type="text"
+              value={link.url}
+              placeholder="Meeting URL"
+              onChange={(e) => handleMeetingLinkChange(index, 'url', e.target.value)}
+              className="meeting-link-input"
+            />
+            <button 
+              className="action-btn delete"
+              onClick={() => handleRemoveMeetingLink(index)}
+            >
+              Delete
+            </button>
+          </div>
+        ) : (
+          <div className="meeting-link-info">
+            <h4>{link.name}</h4>
+            <a href={link.url} target="_blank" rel="noopener noreferrer" className="meeting-link-url">
+              {link.url}
+            </a>
+          </div>
+        )}
+      </div>
+    ))}
+    {editingMeetings && (
+      <button onClick={handleAddMeetingLink} className="add-link-btn">
+        <FaLink /> Add Meeting Link
+      </button>
+    )}
+  </div>
+</div>
             </div>
           </div>
         )}
@@ -1261,3 +1303,5 @@ const AcssContent = () => {
                       };
                       
         export default Acss;
+
+//FETCHING DESCRIPTION ANNOUNCEMENT BIRTHDAY CELEBRANTS AND MEETING LINKS
