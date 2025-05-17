@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import "./Student.css";
-import ReactDOM from 'react-dom/client';
-// import "../../config/vite.config.js";
-
 import supabase from '../../lib/supabaseClient.js';
 
 const StudentContent = () => {
@@ -11,7 +8,16 @@ const StudentContent = () => {
   const [pendingMemberships, setPendingMemberships] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [userData, setUserData] = useState(null);
-
+  const [user, setUser] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const [aiError, setAiError] = useState('');
+  
+// Add a new state for tracking confirmation status at the top with other states
+const [organizationStatus, setOrganizationStatus] = useState({
+  role: null,
+  confirmed: false
+});
 
 
   // Existing useEffect for loading user data
@@ -30,6 +36,55 @@ const StudentContent = () => {
       window.location.href = '/';
     }
   }, []);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
+  useEffect(() => {
+  const checkConfirmationStatus = async () => {
+    if (user) {
+      try {
+        // Query the student_roles table to check confirmation status
+        const { data, error } = await supabase
+          .from('student_roles')
+          .select('role, confirm')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching confirmation status:", error);
+          return;
+        }
+
+        if (data) {
+          setOrganizationStatus({
+            role: data.role,
+            confirmed: data.confirm
+          });
+          
+          // If confirmed, launch the dashboard
+          if (data.confirm) {
+            launchOrganizationDashboard(data.role);
+          }
+        }
+      } catch (err) {
+        console.error("Error checking confirmation status:", err);
+      }
+    }
+  };
+
+  checkConfirmationStatus();
+}, [user]);
+
 
   // Sample organization data
   const organizations = [
@@ -97,7 +152,7 @@ const StudentContent = () => {
     setSelectedOrg(null);
   };
   
- // Function to launch React AI app
+  // Function to launch React AI app
   const launchReactAiApp = () => {
     try {
       // Hide current body content (optional, depending on your UI)
@@ -112,7 +167,7 @@ const StudentContent = () => {
       // Create a script element to load the AI main app
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = '/src/ai/main.jsx';
+      script.src = '/src/ai/Ai-layout.jsx';
       
       // Append script to body
       document.body.appendChild(script);
@@ -124,8 +179,77 @@ const StudentContent = () => {
       setAiError('Could not launch AI assistant');
     }
   };
+  
+  const handleJoinAndLaunch = async (org) => {
+  if (!user) {
+    setError('User not authenticated');
+    return;
+  }
 
- 
+  setIsProcessing(true);
+
+  try {
+    // First step: Insert into student_roles
+    const { error: insertError } = await supabase.from('student_roles').insert([
+      {
+        user_id: user.id,
+        role: org.name,
+        confirm: false, // Setting confirm to false as required
+        email: user.email,
+      }
+    ]);
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+
+    console.log(`Successfully joined ${org.name}`);
+
+    // Second step: Update the user's role in the users table
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ roles: org.name })
+      .eq('id', user.id);
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    console.log(`User role updated to ${org.name}`);
+
+    // Instead of launching the dashboard, show "Wait for confirmation" message
+    // Add a new state to track confirmation status
+    setPendingMemberships([...pendingMemberships, org.id]);
+    closeOrgModal(); // Close the modal after joining
+    
+    // Show confirmation message
+    setIsProcessing(false);
+    alert(`You have successfully joined ${org.name}. Please wait for confirmation from the organization executives.`);
+
+  } catch (error) {
+    console.error('Error in join and launch process:', error);
+    setError(error.message || 'Failed to join organization');
+    setIsProcessing(false);
+  }
+};
+
+const launchOrganizationDashboard = (orgName) => {
+  try {
+    document.body.classList.add('hide-content');
+
+    const dashboardPath = `/src/dashboards/${orgName}Student-layout.jsx`;
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = dashboardPath;
+    document.body.appendChild(script);
+
+    console.log(`${orgName}Student React app launched`);
+  } catch (error) {
+    console.error(`Error launching ${orgName} dashboard:`, error);
+    setError(`Failed to load ${orgName} dashboard`);
+  }
+};
 
   // Function to handle logout
   const handleLogout = async () => {
@@ -152,29 +276,27 @@ const StudentContent = () => {
       window.location.href = '/';
     }
   };
-return (
-  <div className="dashboard-container">
-    {/* Header with User Info */}
-    {userData && (
-      <div className="user-header">
-        <div className="user-welcome">
-          <h3>Welcome, {userData.name}!</h3>
-          <p>{userData.email}</p>
+
+  return (
+    <div className="dashboard-container">
+      {/* Header with User Info */}
+      {userData && (
+        <div className="user-header">
+          <div className="user-welcome">
+            <h1>Hello, {userData.name}!</h1>
+            {/* <p>{userData.email}</p> */}
+          </div>
+          <button
+            onClick={launchReactAiApp}
+            className="chat-with-orgaiize-button">
+            Chat with OrgAIze
+          </button>
+          <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
-        <button
-          onClick={launchReactAiApp} // 🔁 DIRECTLY LAUNCHES THE AI APP
-          className="chat-with-orgaiize-button"
-          style={{ marginLeft: 'auto' }}
-        >
-          Chat with OrgAIze
-        </button>
-        <button onClick={handleLogout} className="logout-button">Logout</button>
-      </div>
-    )}
+      )}
 
       {/* Welcome Section */}
       <div className="welcome-section">
-  
         {/* Background image behind the whole section */}
         <img 
           src="/welcome.PNG" 
@@ -187,7 +309,7 @@ return (
           <p>
             Get ready to level up your student life at New Era University's College of Information and Computing Studies! 🚀<br /><br />
   
-            <strong>NEU orgAIze</strong> is your all-in-one hub for everything related to student organizations. Stay updated with the latest <strong>events 📅, activities 🕹️ ,  announcements 📢, birthday celebrants 🍰,  and file management 📂</strong> — all in one place!<br /><br />
+            <strong>NEU orgAIze</strong> is your all-in-one hub for everything related to student organizations. Stay updated with the latest <strong>events 📅, activities 🕹️, announcements 📢, birthday celebrants 🍰, and file management 📂</strong> — all in one place!<br /><br />
   
             Meet your organization's <strong>officers 🧑‍💼 and fellow members 🤝</strong>, explore what each group has to offer, and find your perfect fit. Whether you're into tech, arts, leadership, or community service, there's a place here for you! 💡💻🎭<br /><br />
   
@@ -203,43 +325,51 @@ return (
             className="logo-image" 
           />
         </div>
-        
       </div>
    
       {/* Organizations Section */}
       <div className="section-header">
-      <h2>🔍 Explore CICS Student Organizations</h2>
-      <p>Find your organization here! Get involved, stay inspired✨🤝</p>
+        <h2>🔍 Explore CICS Student Organizations</h2>
+        <p>Find your organization here! Get involved, stay inspired✨🤝</p>
       </div>
 
-      <div className="organizations-grid">
-        {organizations.map((org) => (
-          <div 
-            className="org-card clickable" 
-            key={org.id}
-            style={{ 
-              "--org-color": org.color 
-            }}
-            onClick={() => openOrgModal(org)}
-          >
-            <div 
-              className="org-image" 
-              style={{ 
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url(${org.imgUrl})` 
-              }}
-            >
-              <div className="org-badge">{org.name}</div>
-            </div>
-            <div className="org-content">
-              <h3>{org.fullName}</h3>
-              <p>{org.description}</p>
-              <div className="card-footer">
-                <span className="view-more">Click to view more</span>
-              </div>
-            </div>
+    <div className="organizations-grid">
+  {organizations.map((org) => {
+    const isPending = organizationStatus.role === org.name && !organizationStatus.confirmed;
+    
+    return (
+      <div 
+        className={`org-card ${isPending ? 'pending-org' : 'clickable'}`} 
+        key={org.id}
+        style={{ 
+          "--org-color": org.color 
+        }}
+        onClick={isPending ? null : () => openOrgModal(org)}
+      >
+        <div 
+          className="org-image" 
+          style={{ 
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url(${org.imgUrl})` 
+          }}
+        >
+          <div className="org-badge">{org.name}</div>
+          {isPending && <div className="pending-badge">Pending</div>}
+        </div>
+        <div className="org-content">
+          <h3>{org.fullName}</h3>
+          <p>{org.description}</p>
+          <div className="card-footer">
+            {isPending ? (
+              <span className="pending-status">Waiting for approval</span>
+            ) : (
+              <span className="view-more">Click to view more</span>
+            )}
           </div>
-        ))}
+        </div>
       </div>
+    );
+  })}
+</div>
 
       {/* App Features Section */}
       <div className="app-features-section">
@@ -274,12 +404,7 @@ return (
           </div>
         </div>
 
-        <div className="app-cta">
-          <h3>🌟 Transform Your University Experience Today</h3>
-          <p>NEU orgAIze brings powerful tools and a vibrant community to help you thrive throughout your academic journey.</p>
-          <button className="download-app-btn">Join Now!</button>
-          
-        </div>
+      
       </div>
         
       {/* Recent Activity Section */}
@@ -365,18 +490,36 @@ return (
                 <p>Office: Building {Math.floor(Math.random() * 5) + 1}, Room {Math.floor(Math.random() * 100) + 100}</p>
                 <p>Faculty Advisor: Dr. {["Smith", "Johnson", "Williams", "Garcia", "Martinez"][Math.floor(Math.random() * 5)]}</p>
               </div>
-              
-              <div className="modal-actions">
-                <button 
-                  className={`membership-button ${pendingMemberships.includes(selectedOrg.id) ? 'pending' : ''}`}
-                  onClick={() => handleMembershipRequest(selectedOrg.id)}
-                  disabled={pendingMemberships.includes(selectedOrg.id)}
-                >
-                  {pendingMemberships.includes(selectedOrg.id) ? 'Pending Approval' : 'Request Membership'}
-                </button>
-              </div>
+
+            <div className="modal-actions">
+  <button 
+    style={{
+      textAlign: 'center',
+      backgroundColor: selectedOrg.color,
+      fontSize: '16px',
+      color: 'white',
+      border: 'none',
+      padding: '10px 20px',
+      borderRadius: '5px'
+    }}
+    className="join-and-launch-button" 
+    onClick={() => handleJoinAndLaunch(selectedOrg)}
+    disabled={isProcessing}
+  >
+    {isProcessing ? 'Processing...' : `Join ${selectedOrg.name} Organization`}
+  </button>
+
+  {error && <p className="error-message">{error}</p>}
+</div>
+
             </div>
           </div>
+        </div>
+      )}
+      
+      {aiError && (
+        <div className="error-message">
+          {aiError}
         </div>
       )}
     </div>

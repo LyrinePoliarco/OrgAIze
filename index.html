@@ -232,17 +232,53 @@
       margin-left: 10px;
     }
     .oauth-button ion-icon {
-  font-size: 20px;
-  margin-right: 8px;
-  vertical-align: middle;
-}
+      font-size: 20px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
 
+    /* Full-screen loading overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+
+    .loading-overlay .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(196, 18, 48, 0.2);
+      border-top: 5px solid #c41230;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .loading-overlay p {
+      font-size: 16px;
+      color: #333;
+    }
   </style>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/css/ionicons.min.css" rel="stylesheet">
 </head>
 <body>
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Logging you in...</p>
+  </div>
+
   <div id="auth-wrapper">
     <div class="container">
       <img src="/neu.png" alt="" class="neu-logo">
@@ -250,26 +286,16 @@
       <!-- Main View with Login Form -->
       <div id="login-container" class="auth-container" style="display: flex;">
         <h2>Login to NEU orgAIze</h2>
-     <!-- OAuth Login Buttons -->
-<div class="oauth-buttons">
-  <button id="google-login" class="oauth-button">
-    <ion-icon name="logo-google"></ion-icon>
-    <span>Continue with Google</span>
-  </button>
-</div>
-
+        <!-- OAuth Login Buttons -->
+        <div class="oauth-buttons">
+          <button id="google-login" class="oauth-button">
+            <ion-icon name="logo-google"></ion-icon>
+            <span>Continue with Google</span>
+          </button>
+        </div>
         
-        <!-- Loading spinner for login -->
-        <div id="login-spinner" class="loading-spinner"></div>
         <!-- Error message for login -->
         <div id="login-error" class="error-message"></div>
-        
-       
-     
-        <!-- Loading spinner for signup -->
-        <div id="signup-spinner" class="loading-spinner"></div>
-        <!-- Error message for signup -->
-        <div id="signup-error" class="error-message"></div>
       </div>
     </div>
   </div>
@@ -288,44 +314,60 @@
     const loginContainer = document.getElementById('login-container');
     const authWrapper = document.getElementById('auth-wrapper');
     const rootElement = document.getElementById('root');
-    
-    
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // Show loading screen
+    function showLoading() {
+      loadingOverlay.style.display = 'flex';
+    }
+
+    // Hide loading screen
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+
     // Check for OAuth callback and existing session on page load
     window.addEventListener('DOMContentLoaded', async () => {
       try {
+        console.log('Page loaded, checking authentication state');
+        
         // First, check if this is a OAuth redirect callback
         const hash = window.location.hash;
         const query = window.location.search;
         
         if (hash.includes('access_token') || query.includes('code=')) {
-          // Process the OAuth callback
-          document.body.innerHTML = '<div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">Processing login, please wait...</div>';
+          console.log('OAuth callback detected', { hash, query });
+          // Show loading overlay immediately on callback detection
+          showLoading();
           
-          const { data, error } = await supabase.auth.getSession();
+          // Handle the OAuth session exchange
+          const { data: authData, error: authError } = await supabase.auth.getSession();
           
-          if (error) {
-            console.error('Error during OAuth callback:', error);
-            window.location.href = '/'; // Redirect to login page on error
+          console.log('Auth session result:', { authData, authError });
+          
+          if (authError) {
+            console.error('Error during OAuth callback:', authError);
+            hideLoading();
+            alert('Authentication error: ' + (authError.message || 'Unknown error'));
+            window.location.href = ''; // Redirect to login page on error
             return;
           }
           
-          if (data.session) {
-            const userData = {
-              email: data.session.user.email,
-              name: data.session.user.user_metadata?.name || data.session.user.email.split('@')[0],
-              id: data.session.user.id,
-              isAuthenticated: true,
-              loginTime: new Date().toISOString()
-            };
-            
-            // Store user data and launch app
-            localStorage.setItem('userData', JSON.stringify(userData));
-            window.location.href = '/'; // Redirect to the app's main page
+          if (authData && authData.session) {
+            console.log('Session established, navigating user directly to dashboard');
+            // Fetch user's role from the database and navigate directly
+            await getUserRoleAndNavigate(authData.session.user);
             return;
+          } else {
+            // No session after callback
+            hideLoading();
+            console.error('No session data after OAuth callback');
+            alert('Login failed: No session data received');
           }
         }
         
-        // Normal session check
+        // Normal session check (not a callback)
+        console.log('Checking for existing session');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -333,37 +375,39 @@
           return;
         }
         
-        if (data.session) {
+        if (data && data.session) {
           console.log('Existing session found:', data.session);
-          
-          const userData = {
-            email: data.session.user.email,
-            name: data.session.user.user_metadata?.name || data.session.user.email.split('@')[0],
-            id: data.session.user.id,
-            isAuthenticated: true,
-            loginTime: new Date().toISOString()
-          };
-          
-          launchReactApp(userData);
+          // Show loading for returning users with session
+          showLoading();
+          // Fetch user's role and navigate accordingly
+          await getUserRoleAndNavigate(data.session.user);
+        } else {
+          console.log('No existing session found, showing login form');
+          // Clear any URL parameters to avoid confusion on refresh
+          if (window.location.search || window.location.hash) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         }
       } catch (error) {
-        console.error('Error during auth initialization:', error);
+        hideLoading();
+        console.error('Error during authentication:', error);
+        alert('Error during authentication: ' + (error.message || 'Unknown error'));
       }
     });
     
     // OAuth Login Handler
     document.getElementById('google-login').addEventListener('click', async () => {
       try {
-        const loginSpinner = document.getElementById('login-spinner');
         const loginError = document.getElementById('login-error');
         
-        loginSpinner.style.display = 'block';
+        // Show loading overlay before starting OAuth flow
+        showLoading();
         loginError.textContent = '';
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: `${window.location.origin}${window.location.pathname}`,
             queryParams: {
               access_type: 'offline',
               prompt: 'consent'
@@ -371,37 +415,185 @@
           }
         });
         
-        if (error) throw error;
+        if (error) {
+          hideLoading();
+          throw error;
+        }
         
         // The user will be redirected away from the page at this point
       } catch (error) {
+        hideLoading();
         console.error('Google login error:', error);
-        document.getElementById('login-spinner').style.display = 'none';
         document.getElementById('login-error').textContent = error.message || 'Error signing in with Google';
       }
     });
     
-   
+    // Add a global logout function that can be called later
+    window.logoutUser = async () => {
+      try {
+        await supabase.auth.signOut();
+        localStorage.removeItem('userData');
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    };
     
-    // Launch React app and hide authentication
-    function launchReactApp(userData) {
-      // Hide authentication UI
-      authWrapper.style.display = 'none';
-      
-      // Show React app container
-      rootElement.style.display = 'block';
-      
-      // Store user data in localStorage for React app to access
-      localStorage.setItem('userData', JSON.stringify(userData));
-      
-      // Load React app script
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = '/src/dashboards/Student-layout.jsx';
-      document.body.appendChild(script);
-      
-      console.log('React app launched with user:', userData);
+    // Function to get user role and navigate to appropriate page
+    async function getUserRoleAndNavigate(user) {
+      try {
+        console.log('Getting user role for:', user);
+        
+        // Query the users table to get the user's role
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('roles')
+          .eq('id', user.id)
+          .single();
+        
+        console.log('User data query result:', { userData, userError });
+        
+        let userRoles = 'student'; // Default role
+        
+        if (userError) {
+          console.log('User not found in users table, checking if new user');
+          
+          // This might be a new user - check if we need to create a record
+          if (userError.code === 'PGRST116') { // Record not found
+            console.log('New user detected, creating user record with default role');
+            
+            // Create a new user record with default role
+            const { data: newUser, error: createError } = await supabase
+              .from('users')
+              .insert([
+                { 
+                  id: user.id,
+                  email: user.email,
+                  name: user.user_metadata?.name || user.email.split('@')[0],
+                  roles: 'student' // Default role for new users
+                }
+              ])
+              .select();
+              
+            if (createError) {
+              console.error('Error creating new user record:', createError);
+            } else {
+              console.log('Created new user record:', newUser);
+              userRoles = 'student';
+            }
+          } else {
+            console.error('Error fetching user role:', userError);
+          }
+        } else if (userData) {
+          // Use the role from the database
+          userRoles = userData.roles || 'student';
+          console.log('Found existing user with roles:', userRoles);
+        }
+        
+        // User data with role information
+        const completeUserData = {
+          email: user.email,
+          name: user.user_metadata?.name || user.email.split('@')[0],
+          id: user.id,
+          roles: userRoles,
+          isAuthenticated: true,
+          loginTime: new Date().toISOString()
+        };
+        
+        console.log('Complete user data:', completeUserData);
+        
+        // Store user data
+        localStorage.setItem('userData', JSON.stringify(completeUserData));
+        
+        // Launch the React app with user data
+        launchReactApp(completeUserData);
+        
+      } catch (error) {
+        hideLoading();
+        console.error('Error in getUserRoleAndNavigate:', error);
+        alert('Error loading user data: ' + (error.message || 'Unknown error'));
+        
+        // Default to student on error
+        const fallbackUserData = {
+          email: user.email,
+          name: user.user_metadata?.name || user.email.split('@')[0],
+          id: user.id,
+          roles: 'student',
+          isAuthenticated: true,
+          loginTime: new Date().toISOString()
+        };
+        
+        console.log('Using fallback user data due to error:', fallbackUserData);
+        launchReactApp(fallbackUserData);
+      }
     }
+ // Launch React app and hide authentication
+function launchReactApp(userData) {
+  console.log('Launching React app with role:', userData.roles);
+  
+  try {
+    // Hide authentication UI
+    authWrapper.style.display = 'none';
+    
+    // Show React app container
+    rootElement.style.display = 'block';
+    
+    // Load appropriate React app script based on role
+    console.log('Loading script for role:', userData.roles);
+    const script = document.createElement('script');
+    script.type = 'module';
+    
+    // Simple routing based on the exact roles value from the database
+    switch (userData.roles) {
+      case 'executive':
+        script.src = '/src/dashboards/Acss-layout.jsx';
+        break;
+      case 'admin':
+        script.src = '/src/dashboards/Admin-layout.jsx';
+        break;
+      case 'ACSS':
+        // Check if confirm button status is TRUE or FALSE for ACSS role
+        if (userData.confirmStatus === true) {
+          // If confirmed, load the ACSS student layout
+          script.src = '/src/dashboards/AcssStudent-layout.jsx';
+        } else {
+          // If not confirmed, load the regular student layout with waiting approval notice
+          script.src = '/src/dashboards/Student-layout.jsx';
+          // Set a flag that can be used in the Student layout to show "waiting approval" message
+          window.acssWaitingApproval = true;
+        }
+        break;
+      case 'student':
+      default:
+        // Default to student layout for any unknown roles
+        script.src = '/src/dashboards/Student-layout.jsx';
+        break;
+    }
+    
+    // Add error handling to script loading
+    script.onerror = (err) => {
+      hideLoading();
+      console.error('Error loading dashboard script:', err);
+      alert('Failed to load dashboard. Please refresh the page or contact support.');
+    };
+    
+    // Add onload handler to hide loading overlay once React is initialized
+    script.onload = () => {
+      // Hide loading overlay after a short delay to allow React to initialize
+      setTimeout(() => {
+        hideLoading();
+      }, 800);
+    };
+    
+    document.body.appendChild(script);
+    
+    console.log(`React app launched with user role: ${userData.roles}`, userData);
+  } catch (error) {
+    hideLoading();
+    console.error('Error in launchReactApp:', error);
+    alert('Error launching application: ' + (error.message || 'Unknown error'));
+  }
+}
   </script>
 </body>
 </html>
