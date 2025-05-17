@@ -21,7 +21,7 @@ const Dashboard = ({ users }) => {
       <h1>Dashboard</h1>
       
       <div className="stats-container">
-        <div className="stats-grid">
+        <div className="stats-row">
           {Object.entries(roleStats).map(([role, count]) => (
             <div key={role} className={`stat-card ${role}`}>
               <h3>{role}</h3>
@@ -50,8 +50,8 @@ const Dashboard = ({ users }) => {
   );
 };
 
-// Role Management Component (preserving original functionality)
-const RoleManagement = ({ users, loading, error, editingUser, roleOptions, startEditing, cancelEditing, saveChanges }) => {
+// Role Management Component
+const RoleManagement = ({ users, loading, error, editingUser, setEditingUser, roleOptions, startEditing, cancelEditing, saveChanges }) => {
   if (loading) return <div className="admin-loading">Loading users...</div>;
   if (error) return <div className="admin-error">Error: {error}</div>;
   
@@ -62,7 +62,6 @@ const RoleManagement = ({ users, loading, error, editingUser, roleOptions, start
         <table className="admin-table">
           <thead>
             <tr>
-             
               <th>Name</th>
               <th>Email</th>
               <th>Role</th>
@@ -73,14 +72,13 @@ const RoleManagement = ({ users, loading, error, editingUser, roleOptions, start
           <tbody>
             {users.map(user => (
               <tr key={user.id}>
-             
                 <td>{user.name}</td>
                 <td>{user.email}</td>
                 <td>
                   {editingUser && editingUser.id === user.id ? (
                     <select 
                       value={editingUser.roles}
-                      onChange={(e) => editingUser.roles = e.target.value}
+                      onChange={(e) => setEditingUser({ ...editingUser, roles: e.target.value })}
                     >
                       {roleOptions.map(role => (
                         <option key={role} value={role}>{role}</option>
@@ -116,14 +114,14 @@ const AdminContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
-  const [roleOptions] = useState(['executive', 'ACSS', 'user', 'admin']);
+  const [roleOptions] = useState(['executive', 'ACSS', 'META', 'CSSC', 'admin']);
   const [currentUser, setCurrentUser] = useState(null);
   
   const location = useLocation();
 
   // Fetch users and current user from Supabase
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
         setLoading(true);
         
@@ -134,20 +132,7 @@ const AdminContent = () => {
           throw new Error('Authentication failed');
         }
         
-        // Fetch user profile data for current user
-        const { data: profileData, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authData.user.id)
-          .single();
-          
-        if (profileError) {
-          console.error('Failed to fetch user profile:', profileError);
-        } else {
-          setCurrentUser(profileData);
-        }
-        
-        // Fetch all users
+        // Fetch users directly from Supabase
         const { data, error: fetchError } = await supabase
           .from('users')
           .select('*');
@@ -164,7 +149,7 @@ const AdminContent = () => {
       }
     };
 
-    fetchData();
+    fetchUsers();
   }, []);
 
   const handleRoleChange = (userId, newRole) => {
@@ -181,16 +166,20 @@ const AdminContent = () => {
     setEditingUser(null);
   };
 
-   // Function to handle logout
+  // Function to handle logout
   const handleLogout = async () => {
     try {
       // First sign out from Supabase auth
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Error during Supabase signout:", error);
+      if (supabase && supabase.auth) {
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          console.error("Error during Supabase signout:", error);
+        } else {
+          console.log("Successfully signed out of Supabase");
+        }
       } else {
-        console.log("Successfully signed out of Supabase");
+        console.log("Supabase not available, proceeding with local logout");
       }
       
       // Clear local storage
@@ -232,56 +221,56 @@ const AdminContent = () => {
 
   if (loading) return <div className="admin-loading">Loading users...</div>;
   if (error) return <div className="admin-error">Error: {error}</div>;
+  
+  return (
+    <div className="admin-layout">
+      <header>
+        {/* Add your header content here if needed */}
+      </header> 
 
- return (
-  <div className="admin-layout">
-    <header>
-      {/* Add your header content here if needed */}
-    </header> 
+      <div className="admin-main">
+        {/* Sidebar Navigation */}
+        <nav className="admin-sidebar">
+          <div className="sidebar-inner">
+            <div className="top-section">
+              <div className="logo">Admin Panel</div>
 
-    <div className="admin-main">
-      {/* Sidebar Navigation */}
-   <nav className="admin-sidebar">
-  <div className="sidebar-inner">
-    <div className="top-section">
-      <div className="logo">Admin Panel</div>
+              <ul className="nav-links">
+                <li className={location.pathname === "/" ? "active" : ""}>
+                  <Link to="/">
+                    <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                </li>
 
-      <ul className="nav-links">
-        <li className={location.pathname === "/" ? "active" : ""}>
-          <Link to="/">
-            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            Dashboard
-          </Link>
-        </li>
+                <li className={location.pathname === "/role-management" ? "active" : ""}>
+                  <Link to="/role-management">
+                    <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+                      <path d="M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                    Role Management
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-        <li className={location.pathname === "/role-management" ? "active" : ""}>
-          <Link to="/role-management">
-            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 00-3-3.87" />
-              <path d="M16 3.13a4 4 0 010 7.75" />
-            </svg>
-            Role Management
-          </Link>
-        </li>
-      </ul>
-    </div>
+            <div className="bottom-section">
+              <li className="logout" onClick={handleLogout} style={{ cursor: 'pointer' }}>
+                <svg className="nav-icon" viewBox="0 0 20 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Log out
+              </li>
 
-    <div className="bottom-section">
-      <li className="logout" onClick={handleLogout} style={{ cursor: 'pointer' }}>
-  <svg className="nav-icon" viewBox="0 0 20 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-  Log out
-</li>
-
-{currentUser && (
+            {currentUser && (
   <div className="user-info">
     <div className="user-detail">
       <span className="user-name">{currentUser.name}</span>
@@ -294,11 +283,10 @@ const AdminContent = () => {
     </div>
   </div>
 )}
-    </div>
+</div>
   </div>
-</nav>
-
-        
+        </nav>
+          
         {/* Main Content Area */}
         <main className="admin-content">
           <Routes>
@@ -309,6 +297,7 @@ const AdminContent = () => {
                 loading={loading}
                 error={error}
                 editingUser={editingUser}
+                setEditingUser={setEditingUser}
                 roleOptions={roleOptions}
                 startEditing={startEditing}
                 cancelEditing={cancelEditing}
