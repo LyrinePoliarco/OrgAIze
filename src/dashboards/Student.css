@@ -1475,7 +1475,7 @@ body.dark-theme .toast-close:hover {
   z-index: 500; /* optional, to keep it above other elements */
 }
 
-.handleAiButton{
+.chat-with-orgaiize-button{
   position: fixed;
   bottom: 20px;
   left: 20px;

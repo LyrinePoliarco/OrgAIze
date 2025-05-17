@@ -3,8 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Message from "../components/Message";
 import PromptForm from "../components/PromptForm";
 import Sidebar from "../components/Sidebar";
-import LoginPage from "../authentication/LoginPage";
-import SignupPage from "../authentication/SignupPage";
+
 import Student from "../dashboards/Student";
 import AcssOrgChart from "../dashboards/AcssOrgChart";
 import Acss from "../dashboards/Acss";
@@ -200,8 +199,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/" element={<AppContent />} /> {/* Default route - Chat interface */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+     
 
           {/* <Route path="/student-dashboard" element={<Student />} /> */}
            {/* Route for your Student component */}

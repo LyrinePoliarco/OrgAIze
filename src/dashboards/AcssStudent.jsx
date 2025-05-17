@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import AcssOrgChart from './AcssOrgChart';
-import './Acss.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './Acss.css'; // Make sure this file exists
+import supabase from '../../lib/supabaseClient.js'; // Uncommented this line
 
-// Placeholder icons (replace with actual imports later)
+// Placeholder icons
 import { 
   FaHome, 
   FaFile, 
@@ -10,14 +11,24 @@ import {
   FaBirthdayCake, 
   FaLink, 
   FaSitemap, 
-  FaCloudUploadAlt, 
-  FaRobot, 
-  FaDownload
+  FaRobot
 } from 'react-icons/fa';
 
-const AcssStudent = () => {
+// Simple placeholder for AcssOrgChart component
+const AcssOrgChart = () => {
+  return (
+    <div className="org-chart">
+      <p>Organization Chart Placeholder</p>
+    </div>
+  );
+};
+
+const AcssStudentContent = () => {
+  const [userData, setUserData] = useState(null);
   // State for active tab
   const [activeTab, setActiveTab] = useState('home');
+  // State for AI error messages
+  const [aiError, setAiError] = useState(null);
   
   // States for content (non-editable for students)
   const [orgDescription] = useState(
@@ -47,6 +58,64 @@ const AcssStudent = () => {
     { id: 3, name: "Technical Workshop Materials.zip", size: "15.7 MB", uploadedBy: "Julius Albert D. Ortiz", date: "April 20, 2025", isHidden: false }
   ]);
   
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      // First sign out from Supabase auth
+      if (supabase && supabase.auth) {
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          console.error("Error during Supabase signout:", error);
+        } else {
+          console.log("Successfully signed out of Supabase");
+        }
+      } else {
+        console.log("Supabase not available, proceeding with local logout");
+      }
+      
+      // Clear local storage
+      localStorage.removeItem('userData');
+      console.log("User data removed from localStorage");
+      
+      // Redirect to the index page
+      window.location.href = '/';
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Fallback if there's an error - still try to redirect
+      localStorage.removeItem('userData');
+      window.location.href = '/';
+    }
+  };
+  
+  // Function to launch React AI app
+  const launchReactAiApp = () => {
+    try {
+      // Hide current body content (optional, depending on your UI)
+      document.body.classList.add('hide-content');
+      
+      // Ensure we have user data
+      const storedUserData = localStorage.getItem('userData');
+      if (!storedUserData) {
+        throw new Error('No user data found');
+      }
+
+      // Create a script element to load the AI main app
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/ai/Ai-layout.jsx';
+      
+      // Append script to body
+      document.body.appendChild(script);
+      
+      console.log('AI React app launched');
+    } catch (error) {
+      console.error('Error launching AI app:', error);
+      // Optionally show an error to the user
+      setAiError('Could not launch AI assistant');
+    }
+  };
+
   // Function to handle tab switching
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -57,7 +126,8 @@ const AcssStudent = () => {
       {/* Sidebar */}
       <div className="sidebar">
         <div className="logo-container">
-          <img src="/image/logo.png" alt="ACSS Logo" className="logo" />
+          {/* Using a placeholder for the logo to prevent errors */}
+          <div className="logo-placeholder">ACSS</div>
           <h2>ACSS</h2>
         </div>
         
@@ -80,7 +150,8 @@ const AcssStudent = () => {
         </div>
         
         <div className="user-info">
-          <img src="/image/logo.png" alt="User" className="user-avatar" />
+          {/* Using a placeholder for the avatar to prevent errors */}
+          <div className="avatar-placeholder">LP</div>
           <div className="user-details">
             <p className="user-name">Lyrine Poliarco</p>
             <p className="user-role">ACSS Member</p>
@@ -94,7 +165,7 @@ const AcssStudent = () => {
           <h1>ACSS Student Dashboard</h1>
           <div className="header-actions">
             <button className="header-btn">Settings</button>
-            <button className="header-btn">Logout</button>
+            <button onClick={handleLogout} className="header-btn">Logout</button>
           </div>
         </div>
         
@@ -111,7 +182,8 @@ const AcssStudent = () => {
                 </div>
                 <div className="panel-content">
                   <div className="org-description">
-                    <img src="/image/org.png" alt="Organization" className="org-image" />
+                    {/* Using a placeholder for the org image to prevent errors */}
+                    <div className="org-image-placeholder">Organization Image</div>
                     <div className="content-display">
                       {orgDescription}
                     </div>
@@ -140,7 +212,8 @@ const AcssStudent = () => {
                   <div className="celebrants-container">
                     {birthdayCelebrants.map(celebrant => (
                       <div key={celebrant.id} className="celebrant-card">
-                        <img src={celebrant.imageUrl} alt={celebrant.name} className="celebrant-img" />
+                        {/* Using a placeholder for the celebrant image to prevent errors */}
+                        <div className="celebrant-img-placeholder">{celebrant.name.charAt(0)}</div>
                         <div className="celebrant-info">
                           <h4>{celebrant.name}</h4>
                           <p>{celebrant.date}</p>
@@ -239,9 +312,12 @@ const AcssStudent = () => {
                     <div className="ai-intro">
                       <h4>ACSS AI Assistant</h4>
                       <p>Get help with finding information or answering questions about ACSS activities.</p>
-                      <button className="chat-btn">Start Chat</button>
+                      <button
+                        onClick={launchReactAiApp}
+                        className="chat-btn">Start Chat</button>
                     </div>
                   </div>
+                  {aiError && <p className="error-message">{aiError}</p>}
                 </div>
               </div>
             </div>
@@ -249,6 +325,18 @@ const AcssStudent = () => {
         )}
       </div>
     </div>
+  );
+};
+
+const AcssStudent = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<AcssStudentContent />} />
+        {/* You might want to add a dedicated route for the AI assistant */}
+        {/* <Route path="/ai-assistant" element={<AiAssistant />} /> */}
+      </Routes>
+    </Router>
   );
 };
 
