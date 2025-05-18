@@ -539,19 +539,21 @@ body {
   min-height: 100vh;
 }
 
-/* Sidebar Styles */
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--card-bg);
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  background-color: var(--card-color);
+  box-shadow: var(--box-shadow);
+  padding: 0;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+  z-index: 999;
   display: flex;
   flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  z-index: 10;
-  border-right: 1px solid var(--border-color);
 }
-
 .logo-container {
   display: flex;
   align-items: center;
