@@ -4,6 +4,10 @@ import AcssOrgChart from './AcssOrgChart';
 import './Acss.css';
 import supabase from '../../lib/supabaseClient.js';
 import { v4 as uuidv4 } from 'uuid';
+import DocumentPanel from './DocumentPanel'; // adjust path if needed
+
+
+
 
 // Icons
 import { 
@@ -27,6 +31,7 @@ import {
   FaAlignCenter, 
   FaAlignRight 
 } from 'react-icons/fa';
+
 
 const AcssContent = () => {
   // State for active tab
@@ -56,17 +61,12 @@ const AcssContent = () => {
   // Data states
   const [birthdayCelebrants, setBirthdayCelebrants] = useState([]);
   const [meetingLinks, setMeetingLinks] = useState([]);
-  const [files, setFiles] = useState([]);
-  const [members] = useState([
-    { id: 1, name: "Faye Camille Buri", year: "4th Year", role: "President", imageUrl: "/image/aya.png" },
-    { id: 2, name: "Aliyah Aira A. Llana", year: "4th Year", role: "Vice President (Internal)", imageUrl: "/image/aya.png" },
-    { id: 3, name: "Julius Albert D. Ortiz", year: "4th Year", role: "Vice President (External)", imageUrl: "/image/aya.png" },
-    { id: 4, name: "Pia Katleya V. Macalanda", year: "3rd Year", role: "Secretary", imageUrl: "/image/aya.png" },
-    { id: 5, name: "Ricky Joe V. Sanglay", year: "3rd Year", role: "Asst. Secretary", imageUrl: "/image/aya.png" },
-    { id: 6, name: "Bai Sakina B. Abad", year: "4th Year", role: "Academic Committee Chairman", imageUrl: "/image/aya.png" },
-    { id: 7, name: "Juliana R. Mancera", year: "3rd Year", role: "Documentation Committee Chairman", imageUrl: "/image/aya.png" },
-    { id: 8, name: "Thoby Jim R. Ralleta", year: "4th Year", role: "Information Committee Chairman", imageUrl: "/image/aya.png" }
-  ]);
+  const [members] = useState([]);
+
+  // Inside your component:
+const [acssUsers, setAcssUsers] = useState([]);
+const [loading, setLoading] = useState(true);
+
   
   // Join Requests state
   const [joinRequests, setJoinRequests] = useState([]);
@@ -81,6 +81,34 @@ const AcssContent = () => {
   const [editingMeetings, setEditingMeetings] = useState(false);
   const [isEditingCelebrants, setIsEditingCelebrants] = useState({});
 
+  useEffect(() => {
+  async function fetchAcssUsers() {
+    try {
+      setLoading(true);
+      
+      // Query Supabase for users with ACSS role
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('roles', 'ACSS');
+      
+      if (error) {
+        console.error('Error fetching ACSS users:', error);
+        return;
+      }
+      
+      setAcssUsers(data || []);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (activeTab === 'members') {
+    fetchAcssUsers();
+  }
+}, [activeTab]);
   // Load user data from localStorage on component mount
   useEffect(() => {
     const storedUserData = localStorage.getItem('userData');
@@ -154,27 +182,6 @@ const AcssContent = () => {
   useEffect(() => {
     if (!organizationId) return;
 
-    const fetchFiles = async () => {
-      const { data, error } = await supabase
-        .from("files")
-        .select("id, file_name, file_url, uploaded_by, is_hidden, uploaded_at")
-        .eq("organization_id", organizationId)
-        .order("uploaded_at", { ascending: false });
-
-      if (data) {
-        const formatted = data.map(file => ({
-          id: file.id,
-          name: file.file_name,
-          size: "N/A",
-          uploadedBy: file.uploaded_by || "Unknown",
-          date: new Date(file.uploaded_at).toLocaleDateString(),
-          isHidden: file.is_hidden
-        }));
-        setFiles(formatted);
-      } else {
-        console.error("File fetch error:", error?.message);
-      }
-    };
 
     const fetchBirthdayCelebrants = async () => {
       const { data, error } = await supabase
@@ -191,7 +198,6 @@ const AcssContent = () => {
       setBirthdayCelebrants(data?.birthday_celebrants || []);
     };
 
-    fetchFiles();
     fetchBirthdayCelebrants();
   }, [organizationId]);
 
@@ -716,13 +722,14 @@ const handleSaveAnnouncement = async () => {
           </button>
           
           <button 
-            className={`nav-link ${activeTab === 'files' ? 'active' : ''}`}
-            onClick={() => handleTabChange('files')}
-          >
-            <FaFile className="nav-icon" />
-            <span>Files</span>
-          </button>
-          
+  className={`nav-link ${activeTab === 'tae' ? 'active' : ''}`}
+  onClick={() => handleTabChange('tae')}
+>
+  <FaFile className="nav-icon" />
+  <span>Document</span>
+</button>
+
+  
           <button 
             className={`nav-link ${activeTab === 'members' ? 'active' : ''}`}
             onClick={() => handleTabChange('members')}
@@ -953,6 +960,9 @@ const handleSaveAnnouncement = async () => {
                   )}
                 </div>
               </div>
+             
+          
+
               
               {/* Birthday Greetings Panel */}
               <div className="panel">
@@ -1077,9 +1087,14 @@ const handleSaveAnnouncement = async () => {
   </div>
 </div>
             </div>
-          </div>
-        )}
+  </div>
+)}
         
+      {activeTab === 'tae' && <DocumentPanel />}
+
+
+
+             
         {/* Files Tab Content */}
         {activeTab === 'files' && (
           <div className="tab-content">
@@ -1105,9 +1120,7 @@ const handleSaveAnnouncement = async () => {
               <div className="panel files-list-panel">
                 <div className="panel-header">
                   <h3><FaFile className="panel-icon" /> Files</h3>
-                  <div className="search-container">
-                    <input type="text" placeholder="Search files..." className="search-input" />
-                  </div>
+                 
                 </div>
                 <div className="panel-content">
                   <table className="files-table">
@@ -1176,53 +1189,45 @@ const handleSaveAnnouncement = async () => {
                                 </div>
                               )}
                               
-                              {/* Member Access Tab Content */}
-                              {activeTab === 'members' && (
-                                <div className="tab-content">
-                                  <h2>Member Access</h2>
-                                  
-                                  <div className="panels-grid">
-                                    {/* ACSS Student Members Panel */}
-                                    <div className="panel members-panel">
-                                      <div className="panel-header">
-                                        <h3><FaUsersCog className="panel-icon" /> ACSS Student Members</h3>
-                                        <div className="search-container">
-                                          <input type="text" placeholder="Search members..." className="search-input" />
-                                        </div>
-                                      </div>
-                                      <div className="panel-content">
-                                        <table className="members-table">
-                                          <thead>
-                                            <tr>
-                                              <th>Member</th>
-                                              <th>Year</th>
-                                              <th>Role</th>
-                                              <th>Actions</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {members.map(member => (
-                                              <tr key={member.id}>
-                                                <td className="member-cell">
-                                                  <img src={member.imageUrl} alt={member.name} className="member-avatar" />
-                                                  <span>{member.name}</span>
-                                                </td>
-                                                <td>{member.year}</td>
-                                                <td>{member.role}</td>
-                                                <td>
-                                                  <div className="member-actions">
-                                                    <button className="action-btn promote">
-                                                      {member.role.includes("President") || member.role.includes("Chairman") ? 'Demote' : 'Promote'}
-                                                    </button>
-                                                    <button className="action-btn remove">Remove</button>
-                                                  </div>
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
+                        
+                         {activeTab === 'members' && (
+             <div className="tab-content">
+             <h2>Member Access</h2>
+    
+             <div className="panels-grid">
+            {/* ACSS Student Members Panel */}
+          <div className="panel members-panel">
+          <div className="panel-header">
+          <h3><FaUsersCog className="panel-icon" /> ACSS Student Members</h3>
+          
+            </div>
+            <div className="panel-content">
+                <table className="members-table">
+             <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Created At</th>
+               
+              </tr>
+            </thead>
+             <tbody>
+              {/* Replace this with actual data fetched from Supabase */}
+              {acssUsers.map(user => (
+                <tr key={user.id}>
+                  <td>{user.email}</td>
+                  <td>{user.name}</td>
+                  <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                  <td>
+                    
+                  </td>
+                 </tr>
+                 ))}
+              </tbody>
+             </table>
+          </div>
+           </div>
+  
                                     
                                     {/* Join Requests Panel */}
                                     <div className="panel join-requests-panel">

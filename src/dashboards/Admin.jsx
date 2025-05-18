@@ -47,6 +47,7 @@ const Dashboard = ({ users }) => {
         </div>
       </div>
     </div>
+
   );
 };
 
@@ -116,6 +117,7 @@ const AdminContent = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [roleOptions] = useState(['executive', 'student', 'admin', 'ACSS', 'CSSC','LINKS','META', 'SITES']);
   const [currentUser, setCurrentUser] = useState(null);
+  const [aiError, setAiError] = useState('');
   
   const location = useLocation();
 
@@ -195,6 +197,34 @@ const AdminContent = () => {
       window.location.href = '/';
     }
   };
+   
+  // Function to launch React AI app
+  const launchReactAiApp = () => {
+    try {
+      // Hide current body content (optional, depending on your UI)
+      document.body.classList.add('hide-content');
+      
+      // Ensure we have user data
+      const storedUserData = localStorage.getItem('userData');
+      if (!storedUserData) {
+        throw new Error('No user data found');
+      }
+
+      // Create a script element to load the AI main app
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = '/src/ai/Ai-layout.jsx';
+      
+      // Append script to body
+      document.body.appendChild(script);
+      
+      console.log('AI React app launched');
+    } catch (error) {
+      console.error('Error launching AI app:', error);
+      // Optionally show an error to the user
+      setAiError('Could not launch AI assistant');
+    }
+  };
 
   const saveChanges = async () => {
     try {
@@ -226,6 +256,11 @@ const AdminContent = () => {
     <div className="admin-layout">
       <header>
         {/* Add your header content here if needed */}
+          <button
+            onClick={launchReactAiApp}
+            className="chat-with-orgaiize-button">
+            Chat with OrgAIze
+          </button>
       </header> 
 
       <div className="admin-main">
@@ -306,6 +341,7 @@ const AdminContent = () => {
             } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+         
         </main>
       </div>
     </div>

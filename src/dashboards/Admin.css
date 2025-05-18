@@ -31,6 +31,21 @@ body {
   line-height: 1.5;
 }
 
+.chat-with-orgaiize-button{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+   z-index: 500;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   margin-top: 0;
