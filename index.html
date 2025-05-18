@@ -335,6 +335,22 @@
       margin-bottom: 16px;
       color: #555;
     }
+
+    /* Email domain info styles */
+    .domain-info {
+      margin-bottom: 16px;
+      padding: 12px;
+      background-color: rgba(196, 18, 48, 0.08);
+      border-radius: 10px;
+      border-left: 4px solid var(--neu-red);
+    }
+    
+    .domain-notice {
+      margin-bottom: 0 !important;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--neu-gray);
+    }
   </style>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
@@ -355,6 +371,8 @@
       <div id="login-container" class="auth-container" style="display: flex;">
         <h2>Welcome to NEU orgAIze</h2>
         <p>Your smart campus organization assistant</p>
+        
+       
         <!-- OAuth Login Buttons -->
         <div class="oauth-buttons">
           <button id="google-login" class="oauth-button">
@@ -512,6 +530,25 @@
     async function getUserRoleAndNavigate(user) {
       try {
         console.log('Getting user role for:', user);
+        
+        // Check if user email ends with neu.edu.ph
+        if (!user.email.endsWith('@neu.edu.ph')) {
+          console.error('Access denied: Non-NEU email detected');
+          
+          // Sign the user out
+          await supabase.auth.signOut();
+          
+          // Show error message
+          hideLoading();
+          document.getElementById('login-error').textContent = 
+            'Access restricted to NEU email addresses only (@neu.edu.ph)';
+          
+          // Clear any stored data
+          localStorage.removeItem('userData');
+          
+          // Return early to prevent further processing
+          return;
+        }
         
         // Query the users table to get the user's role
         const { data: userData, error: userError } = await supabase
