@@ -5,39 +5,67 @@
   <link rel="icon" type="image/svg+xml" href="/neu.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEU orgAIze</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    :root {
+      --neu-red: #c41230;
+      --neu-red-dark: #a50f28;
+      --neu-gray: #505050;
+      --neu-light-gray: #f8f9fa;
+      --text-color: #333333;
+      --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      background-color: #f5f5f5;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
+      color: var(--text-color);
+      line-height: 1.6;
     }
     
     .container {
       background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      box-shadow: var(--box-shadow);
       width: 100%;
-      max-width: 400px;
-      padding: 40px 30px;
+      max-width: 420px;
+      padding: 40px;
       text-align: center;
       position: relative;
+      transition: var(--transition);
+    }
+    
+    .container:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
     }
     
     .content-section {
       display: flex;
       flex-direction: column;
-      gap: 25px;
+      gap: 28px;
     }
     
     .button-group {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 16px;
+      margin-top: 10px;
     }
     
     .route-button {
@@ -45,22 +73,24 @@
       align-items: center;
       justify-content: center;
       padding: 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       text-decoration: none;
-      transition: all 0.3s ease;
-      font-weight: 500;
-      gap: 10px;
+      transition: var(--transition);
+      font-weight: 600;
+      gap: 12px;
       cursor: pointer;
       border: none;
+      letter-spacing: 0.01em;
     }
     
     .primary-button {
-      background-color: #c41230; /* NEU Red */
+      background-color: var(--neu-red);
       color: white;
     }
     
     .primary-button:hover {
-      background-color: #a50f28;
+      background-color: var(--neu-red-dark);
+      transform: translateY(-2px);
     }
     
     .route-button-text {
@@ -73,15 +103,20 @@
     }
     
     .neu-logo {
-      width: 120px;
-      margin-bottom: 20px;
+      width: 130px;
+      margin-bottom: 24px;
+      transition: var(--transition);
+    }
+    
+    .neu-logo:hover {
+      transform: scale(1.05);
     }
 
     /* Auth Container Styles */
     .auth-container {
       display: none;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
       width: 100%;
     }
 
@@ -92,56 +127,65 @@
     .auth-form {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 16px;
     }
 
     .auth-form input {
-      padding: 14px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
       font-size: 16px;
+      font-family: inherit;
+      transition: var(--transition);
+      background-color: #f8f9fa;
     }
 
     .auth-form input:focus {
       outline: none;
-      border-color: #c41230;
+      border-color: var(--neu-red);
+      box-shadow: 0 0 0 4px rgba(196, 18, 48, 0.1);
     }
 
     .auth-form button {
-      padding: 14px;
-      border-radius: 6px;
-      background-color: #c41230;
+      padding: 16px;
+      border-radius: 10px;
+      background-color: var(--neu-red);
       color: white;
       border: none;
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: var(--transition);
+      font-family: inherit;
     }
 
     .auth-form button:hover {
-      background-color: #a50f28;
+      background-color: var(--neu-red-dark);
+      transform: translateY(-2px);
     }
 
     .error-message {
-      color: #c41230;
+      color: var(--neu-red);
       font-size: 14px;
       text-align: left;
       min-height: 20px;
-    }
-
-    .auth-toggle {
-      font-size: 14px;
-      margin-top: 10px;
-    }
-
-    .auth-toggle span {
-      color: #c41230;
-      cursor: pointer;
       font-weight: 500;
     }
 
+    .auth-toggle {
+      font-size: 15px;
+      margin-top: 12px;
+    }
+
+    .auth-toggle span {
+      color: var(--neu-red);
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
     .auth-toggle span:hover {
+      color: var(--neu-red-dark);
       text-decoration: underline;
     }
 
@@ -151,16 +195,19 @@
       left: 20px;
       background: none;
       border: none;
-      color: #666;
+      color: var(--neu-gray);
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-size: 14px;
+      transition: var(--transition);
+      font-weight: 500;
     }
 
     .back-button:hover {
-      color: #c41230;
+      color: var(--neu-red);
+      transform: translateX(-3px);
     }
 
     #main-view, #login-container, #signup-container {
@@ -174,7 +221,7 @@
       height: 40px;
       margin: 10px auto;
       border: 4px solid rgba(196, 18, 48, 0.2);
-      border-top: 4px solid #c41230;
+      border-top: 4px solid var(--neu-red);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -187,8 +234,8 @@
     .oauth-buttons {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 15px;
+      gap: 12px;
+      margin-top: 20px;
       margin-bottom: 10px;
     }
     
@@ -196,23 +243,30 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 12px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
       background-color: white;
       cursor: pointer;
-      transition: background-color 0.3s;
+      transition: var(--transition);
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
     
     .oauth-button:hover {
-      background-color: #f5f5f5;
+      background-color: var(--neu-light-gray);
+      border-color: #d0d0d0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
     
     .divider {
       display: flex;
       align-items: center;
-      margin: 15px 0;
+      margin: 20px 0;
       color: #777;
       font-size: 14px;
     }
@@ -221,18 +275,18 @@
     .divider::after {
       content: "";
       flex: 1;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid #e0e0e0;
     }
     
     .divider::before {
-      margin-right: 10px;
+      margin-right: 12px;
     }
     
     .divider::after {
-      margin-left: 10px;
+      margin-left: 12px;
     }
     .oauth-button ion-icon {
-      font-size: 20px;
+      font-size: 22px;
       margin-right: 8px;
       vertical-align: middle;
     }
@@ -244,12 +298,13 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(255, 255, 255, 0.9);
+      background-color: rgba(255, 255, 255, 0.95);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      backdrop-filter: blur(5px);
       display: none;
     }
 
@@ -257,15 +312,28 @@
       width: 50px;
       height: 50px;
       border: 5px solid rgba(196, 18, 48, 0.2);
-      border-top: 5px solid #c41230;
+      border-top: 5px solid var(--neu-red);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     .loading-overlay p {
-      font-size: 16px;
+      font-size: 17px;
       color: #333;
+      font-weight: 500;
+    }
+    
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #111;
+    }
+    
+    p {
+      margin-bottom: 16px;
+      color: #555;
     }
   </style>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
@@ -281,11 +349,12 @@
 
   <div id="auth-wrapper">
     <div class="container">
-      <img src="/neu.png" alt="" class="neu-logo">
+      <img src="/neu.png" alt="Northeastern University Logo" class="neu-logo">
       
       <!-- Main View with Login Form -->
       <div id="login-container" class="auth-container" style="display: flex;">
-        <h2>Login to NEU orgAIze</h2>
+        <h2>Welcome to NEU orgAIze</h2>
+        <p>Your smart campus organization assistant</p>
         <!-- OAuth Login Buttons -->
         <div class="oauth-buttons">
           <button id="google-login" class="oauth-button">
@@ -527,76 +596,74 @@
         launchReactApp(fallbackUserData);
       }
     }
- // Launch React app and hide authentication
-function launchReactApp(userData) {
-  console.log('Launching React app with role:', userData.roles);
-  
-  try {
-    // Hide authentication UI
-    authWrapper.style.display = 'none';
     
-    // Show React app container
-    rootElement.style.display = 'block';
-    
-    // Load appropriate React app script based on role
-    console.log('Loading script for role:', userData.roles);
-    const script = document.createElement('script');
-    script.type = 'module';
-    
-    // Simple routing based on the exact roles value from the database
-    switch (userData.roles) {
-      case 'executive':
-        script.src = '/src/dashboards/Acss-layout.jsx';
-        break;
-      case 'admin':
-        script.src = '/src/dashboards/Admin-layout.jsx';
-        break;
-      // case 'META':
-      //   script.src = '/src/dashboards/META-layout.jsx';
-      //   break;
-      case 'ACSS':
-        // Check if confirm button status is TRUE or FALSE for ACSS role
-        if (userData.confirmStatus === true) {
-          // If confirmed, load the ACSS student layout
-          script.src = '/src/dashboards/AcssStudent-layout.jsx';
-        } else {
-          // If not confirmed, load the regular student layout with waiting approval notice
-          script.src = '/src/dashboards/Student-layout.jsx';
-          // Set a flag that can be used in the Student layout to show "waiting approval" message
-          window.acssWaitingApproval = true;
+    // Launch React app and hide authentication
+    function launchReactApp(userData) {
+      console.log('Launching React app with role:', userData.roles);
+      
+      try {
+        // Hide authentication UI
+        authWrapper.style.display = 'none';
+        
+        // Show React app container
+        rootElement.style.display = 'block';
+        
+        // Load appropriate React app script based on role
+        console.log('Loading script for role:', userData.roles);
+        const script = document.createElement('script');
+        script.type = 'module';
+        
+        // Simple routing based on the exact roles value from the database
+        switch (userData.roles) {
+          case 'executive':
+            script.src = '/src/dashboards/Acss-layout.jsx';
+            break;
+          case 'admin':
+            script.src = '/src/dashboards/Admin-layout.jsx';
+            break;
+          case 'ACSS':
+            // Check if confirm button status is TRUE or FALSE for ACSS role
+            if (userData.confirmStatus === true) {
+              // If confirmed, load the ACSS student layout
+              script.src = '/src/dashboards/AcssStudent-layout.jsx';
+            } else {
+              // If not confirmed, load the regular student layout with waiting approval notice
+              script.src = '/src/dashboards/Student-layout.jsx';
+              // Set a flag that can be used in the Student layout to show "waiting approval" message
+              window.acssWaitingApproval = true;
+            }
+            break;
+          case 'student':
+          default:
+            // Default to student layout for any unknown roles
+            script.src = '/src/dashboards/Student-layout.jsx';
+            break;
         }
-        break;
-      case 'student':
-      default:
-        // Default to student layout for any unknown roles
-        script.src = '/src/dashboards/Student-layout.jsx';
-        break;
-    }
-    
-    // Add error handling to script loading
-    script.onerror = (err) => {
-      hideLoading();
-      console.error('Error loading dashboard script:', err);
-      alert('Failed to load dashboard. Please refresh the page or contact support.');
-    };
-    
-    // Add onload handler to hide loading overlay once React is initialized
-    script.onload = () => {
-      // Hide loading overlay after a short delay to allow React to initialize
-      setTimeout(() => {
+        
+        // Add error handling to script loading
+        script.onerror = (err) => {
+          hideLoading();
+          console.error('Error loading dashboard script:', err);
+          alert('Failed to load dashboard. Please refresh the page or contact support.');
+        };
+        
+        // Add onload handler to hide loading overlay once React is initialized
+        script.onload = () => {
+          // Hide loading overlay after a short delay to allow React to initialize
+          setTimeout(() => {
+            hideLoading();
+          }, 800);
+        };
+        
+        document.body.appendChild(script);
+        
+        console.log(`React app launched with user role: ${userData.roles}`, userData);
+      } catch (error) {
         hideLoading();
-      }, 800);
-    };
-    
-    document.body.appendChild(script);
-    
-    console.log(`React app launched with user role: ${userData.roles}`, userData);
-  } catch (error) {
-    hideLoading();
-    console.error('Error in launchReactApp:', error);
-    alert('Error launching application: ' + (error.message || 'Unknown error'));
-  }
-}
+        console.error('Error in launchReactApp:', error);
+        alert('Error launching application: ' + (error.message || 'Unknown error'));
+      }
+    }
   </script>
 </body>
 </html>

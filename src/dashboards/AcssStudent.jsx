@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './Acss.css'; // Make sure this file exists
-import supabase from '../../lib/supabaseClient.js'; // Uncommented this line
+import supabase from '../../lib/supabaseClient.js';
 
 // Placeholder icons
 import { 
@@ -23,40 +23,375 @@ const AcssOrgChart = () => {
   );
 };
 
+// Define the Home component
+const HomeComponent = ({ orgDescription, announcement, birthdayCelebrants, meetingLinks }) => {
+  return (
+    <div className="tab-content">
+      <h2>Home</h2>
+      
+      <div className="panels-grid">
+        {/* Organization Description Panel */}
+        <div className="panel">
+          <div className="panel-header">
+            <h3><FaBullhorn className="panel-icon" /> Organization Description</h3>
+          </div>
+          <div className="panel-content">
+            <div className="org-description">
+              {/* Using a placeholder for the org image to prevent errors */}
+              <div className="org-image-placeholder"></div>
+              <img src="/image/org.png" alt="Organization" className="org-image" />
+              <div
+                className="content-display"
+                dangerouslySetInnerHTML={{ __html: orgDescription || 'No organization description available.' }}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Announcement Panel */}
+        <div className="panel">
+          <div className="panel-header">
+            <h3><FaBullhorn className="panel-icon" /> Announcement</h3>
+          </div>
+          <div className="panel-content">
+            <div 
+              className="announcement-display"
+              dangerouslySetInnerHTML={{ __html: announcement || 'No announcements at this time.' }}
+            />
+          </div>
+        </div>
+        
+        {/* Birthday Greetings Panel */}
+        <div className="panel">
+          <div className="panel-header">
+            <h3><FaBirthdayCake className="panel-icon" /> Birthday Greetings</h3>
+          </div>
+          <div className="panel-content">
+            {birthdayCelebrants && birthdayCelebrants.length > 0 ? (
+              <div className="celebrants-list">
+                {birthdayCelebrants.map((celebrant, index) => {
+                  // Format the birthday date
+                  const birthDate = new Date(celebrant.birthday);
+                  const formattedDate = birthDate.toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric'
+                  });
+                  
+                  return (
+                    <div key={celebrant.id || index} className="celebrant-item">
+                      <div className="celebrant-name">{celebrant.name}</div>
+                      <div className="celebrant-date">{formattedDate}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p>No birthday celebrants this month.</p>
+            )}
+          </div>
+        </div>
+        
+        {/* Meeting Links Panel */}
+        <div className="panel">
+          <div className="panel-header">
+            <h3><FaLink className="panel-icon" /> Meeting Links</h3>
+          </div>
+          <div className="panel-content">
+            {meetingLinks.length > 0 ? (
+              <div className="meeting-links">
+                {meetingLinks.map(link => (
+                  <div key={link.id} className="meeting-link-item">
+                    <div className="meeting-link-info">
+                      <a href={link.url} target="_blank" rel="noopener noreferrer">
+                        {link.url}
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No meeting links available.</p>
+            )}
+          </div>
+        </div>
+        
+        {/* Organizational Chart Panel */}
+        <div className="panel org-chart-panel">
+          <div className="panel-header">
+            <h3><FaSitemap className="panel-icon" /> Organizational Chart</h3>
+          </div>
+          <div className="panel-content">
+            <AcssOrgChart />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Define the Files component
+const FilesComponent = ({ files, launchReactAiApp, aiError }) => {
+  return (
+    <div className="tab-content">
+      <h2>Files</h2>
+      
+      <div className="panels-grid">
+        {/* Files List Panel */}
+        <div className="panel files-list-panel">
+          <div className="panel-header">
+            <h3><FaFile className="panel-icon" /> Files</h3>
+            <div className="search-container">
+              <input type="text" placeholder="Search files..." className="search-input" />
+            </div>
+          </div>
+          <div className="panel-content">
+            {files.length > 0 ? (
+              <table className="files-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th>Uploaded By</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {files.map(file => (
+                    <tr key={file.id}>
+                      <td>{file.name}</td>
+                      <td>{file.size}</td>
+                      <td>{file.uploadedBy}</td>
+                      <td>{file.date}</td>
+                      <td>
+                        <div className="file-actions">
+                          <button className="action-btn download">Download</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p>No files available.</p>
+            )}
+          </div>
+        </div>
+        
+        {/* AI Chat Panel */}
+        <div className="panel">
+          <div className="panel-header">
+            <h3><FaRobot className="panel-icon" /> AI Assistant</h3>
+          </div>
+          <div className="panel-content">
+            <div className="ai-chat-preview">
+              <FaRobot className="ai-icon" />
+              <div className="ai-intro">
+                <h4>ACSS AI Assistant</h4>
+                <p>Get help with finding information or answering questions about ACSS activities.</p>
+                <button
+                  onClick={launchReactAiApp}
+                  className="chat-btn">Start Chat</button>
+              </div>
+            </div>
+            {aiError && <p className="error-message">{aiError}</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AcssStudentContent = () => {
+  // User data state
   const [userData, setUserData] = useState(null);
   // State for active tab
   const [activeTab, setActiveTab] = useState('home');
   // State for AI error messages
   const [aiError, setAiError] = useState(null);
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
   
-  // States for content (non-editable for students)
-  const [orgDescription] = useState(
-    "The Association of Computer Science Students (ACSS) at New Era University is dedicated to fostering academic excellence and professional growth in the field of computing. Founded in 2005, ACSS has been a platform for students to explore and enhance their skills beyond the classroom."
-  );
+  // States for content fetched from Supabase
+  const [orgDescription, setOrgDescription] = useState('');
+  const [announcement, setAnnouncement] = useState('');
+  const [birthdayCelebrants, setBirthdayCelebrants] = useState([]);
+  const [meetingLinks, setMeetingLinks] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [currentUser, setCurrentUser] = useState({
+    name: '',
+    role: ''
+  });
   
-  const [announcement] = useState(
-    "Welcome to the ACSS Student Dashboard! This platform will help you stay informed about upcoming events and activities."
-  );
-  
-  // Mock data for birthday celebrants
-  const [birthdayCelebrants] = useState([
-    { id: 1, name: "Faye Camille Buri", date: "May 15", imageUrl: "/image/faye.png" },
-    { id: 2, name: "Etienne Banquil", date: "May 22", imageUrl: "/image/eti.png" }
-  ]);
-  
-  // Mock data for meeting links
-  const [meetingLinks] = useState([
-    { id: 1, title: "Weekly General Assembly", url: "https://meet.google.com/abc-defg-hij", date: "Every Friday, 4:00 PM" },
-    { id: 2, title: "Executive Committee Meeting", url: "https://meet.google.com/xyz-abcd-efg", date: "Every Wednesday, 5:30 PM" },
-    { id: 3, title: "Technical Workshop Series", url: "https://meet.google.com/123-456-789", date: "May 18, 2:00 PM" }
-  ]);
-  
-  // Mock data for files (only showing visible files)
-  const [files] = useState([
-    { id: 1, name: "ACSS Constitution.pdf", size: "1.2 MB", uploadedBy: "Faye Camille Buri", date: "April 10, 2025", isHidden: false },
-    { id: 3, name: "Technical Workshop Materials.zip", size: "15.7 MB", uploadedBy: "Julius Albert D. Ortiz", date: "April 20, 2025", isHidden: false }
-  ]);
+  // Fetch data from Supabase
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get the user from localStorage (assuming it's stored during login)
+        const storedUserData = localStorage.getItem('userData');
+        if (storedUserData) {
+          const parsedUserData = JSON.parse(storedUserData);
+          setUserData(parsedUserData);
+          
+          // Fetch current user details from users table
+          const { data: userDetails, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', parsedUserData.id)
+            .single();
+          
+          if (userError) throw userError;
+          
+          if (userDetails) {
+            setCurrentUser({
+              name: userDetails.name || 'ACSS Member',
+              role: userDetails.role || 'Member'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    const fetchOrganizationDetails = async () => {
+      try {
+        // Fetch organization description from organization_details table
+        const { data: orgData, error: orgError } = await supabase
+          .from('organization_details')
+          .select('description')
+          .single();
+        
+        if (orgError) throw orgError;
+        
+        if (orgData) {
+          setOrgDescription(orgData.description);
+        }
+      } catch (error) {
+        console.error('Error fetching organization details:', error);
+      }
+    };
+
+    const fetchAnnouncement = async () => {
+      try {
+        // Fetch latest announcement
+        const { data: announcementData, error: announcementError } = await supabase
+          .from('organization_details')
+          .select('announcement')
+          .single();
+        
+        if (announcementError) throw announcementError;
+        
+        if (announcementData) {
+          setAnnouncement(announcementData.announcement);
+        }
+      } catch (error) {
+        console.error('Error fetching announcement:', error);
+      }
+    };
+
+    const fetchBirthdayCelebrants = async () => {
+      try {
+        // Fetch birthday celebrants from organization_details table
+        const { data: celebrantsData, error: celebrantsError } = await supabase
+          .from('organization_details')
+          .select('birthday_celebrants')
+          .single();
+          
+        if (celebrantsError) throw celebrantsError;
+        
+        if (celebrantsData && celebrantsData.birthday_celebrants) {
+          // Set the birthday celebrants HTML content directly
+          setBirthdayCelebrants(celebrantsData.birthday_celebrants);
+        } else {
+          setBirthdayCelebrants('No birthday celebrants this month.');
+        }
+      } catch (error) {
+        console.error('Error fetching birthday celebrants:', error);
+        setBirthdayCelebrants('Error loading birthday celebrants.');
+      }
+    };
+
+    // Fixed fetchMeetingLinks function
+    const fetchMeetingLinks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('organization_details')
+          .select('meeting_links')
+          .single(); // get only one row
+
+        if (error) throw error;
+
+        if (data?.meeting_links) {
+          // Handle different possible formats of meeting_links
+          if (typeof data.meeting_links === 'string') {
+            // If it's a single string URL
+            setMeetingLinks([{ id: 1, url: data.meeting_links }]);
+          } else if (Array.isArray(data.meeting_links)) {
+            // If it's already an array of objects with URLs
+            const formattedLinks = data.meeting_links.map((link, index) => {
+              // If each item is already an object with id and url
+              if (typeof link === 'object' && link.url) {
+                return link;
+              }
+              // If each item is just a string URL
+              return { id: index + 1, url: link };
+            });
+            setMeetingLinks(formattedLinks);
+          }
+        } else {
+          setMeetingLinks([]);
+        }
+      } catch (error) {
+        console.error('Error fetching meeting links:', error);
+        setMeetingLinks([]);
+      }
+    };
+
+    const fetchFiles = async () => {
+      try {
+        // Fetch visible files (not hidden)
+        const { data: fileData, error: fileError } = await supabase
+          .from('files') // Changed from Organization_details to files based on context
+          .select('*')
+          .eq('isHidden', false);
+        
+        if (fileError) throw fileError;
+        
+        if (fileData) {
+          // Format dates for display
+          const formattedFiles = fileData.map(file => {
+            return {
+              id: file.id,
+              name: file.name,
+              size: file.size,
+              uploadedBy: file.uploadedBy,
+              date: new Date(file.date).toLocaleDateString('en-US', { 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric' 
+              }),
+              isHidden: file.isHidden
+            };
+          });
+          
+          setFiles(formattedFiles);
+        }
+      } catch (error) {
+        console.error('Error fetching files:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Execute all fetch functions
+    fetchUserData();
+    fetchOrganizationDetails();
+    fetchAnnouncement();
+    fetchBirthdayCelebrants();
+    fetchMeetingLinks();
+    fetchFiles();
+  }, []);
   
   // Function to handle logout
   const handleLogout = async () => {
@@ -121,12 +456,16 @@ const AcssStudentContent = () => {
     setActiveTab(tab);
   };
   
+  if (isLoading) {
+    return <div className="loading">Loading dashboard data...</div>;
+  }
+  
   return (
     <div className="acss-dashboard">
       {/* Sidebar */}
       <div className="sidebar">
         <div className="logo-container">
-          {/* Using a placeholder for the logo to prevent errors */}
+          {/* Placeholder for the logo */}
           <div className="logo-placeholder">ACSS</div>
           <h2>ACSS</h2>
         </div>
@@ -150,15 +489,14 @@ const AcssStudentContent = () => {
         </div>
         
         <div className="user-info">
-          {/* Using a placeholder for the avatar to prevent errors */}
-          <div className="avatar-placeholder">LP</div>
+          <div className="avatar-placeholder">{currentUser.name ? currentUser.name.charAt(0) : 'U'}</div>
           <div className="user-details">
-            <p className="user-name">Lyrine Poliarco</p>
-            <p className="user-role">ACSS Member</p>
+            <p className="user-name">{currentUser.name || 'ACSS Member'}</p>
+            <p className="user-role">{currentUser.role || 'Member'}</p>
           </div>
         </div>
       </div>
-      
+
       {/* Main Content */}
       <div className="main-content">
         <div className="header">
@@ -168,161 +506,25 @@ const AcssStudentContent = () => {
             <button onClick={handleLogout} className="header-btn">Logout</button>
           </div>
         </div>
-        
-        {/* Home Tab Content */}
-        {activeTab === 'home' && (
-          <div className="tab-content">
-            <h2>Home</h2>
-            
-            <div className="panels-grid">
-              {/* Organization Description Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaBullhorn className="panel-icon" /> Organization Description</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="org-description">
-                    {/* Using a placeholder for the org image to prevent errors */}
-                    <div className="org-image-placeholder">Organization Image</div>
-                    <div className="content-display">
-                      {orgDescription}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Announcement Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaBullhorn className="panel-icon" /> Announcement</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="content-display">
-                    {announcement}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Birthday Greetings Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaBirthdayCake className="panel-icon" /> Birthday Greetings</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="celebrants-container">
-                    {birthdayCelebrants.map(celebrant => (
-                      <div key={celebrant.id} className="celebrant-card">
-                        {/* Using a placeholder for the celebrant image to prevent errors */}
-                        <div className="celebrant-img-placeholder">{celebrant.name.charAt(0)}</div>
-                        <div className="celebrant-info">
-                          <h4>{celebrant.name}</h4>
-                          <p>{celebrant.date}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Meeting Links Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaLink className="panel-icon" /> Meeting Links</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="meeting-links">
-                    {meetingLinks.map(link => (
-                      <div key={link.id} className="meeting-link-item">
-                        <div className="meeting-link-info">
-                          <h4>{link.title}</h4>
-                          <p>{link.date}</p>
-                          <a href={link.url} target="_blank" rel="noopener noreferrer">{link.url}</a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Organizational Chart Panel */}
-              <div className="panel org-chart-panel">
-                <div className="panel-header">
-                  <h3><FaSitemap className="panel-icon" /> Organizational Chart</h3>
-                </div>
-                <div className="panel-content">
-                  <AcssOrgChart />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Files Tab Content */}
-        {activeTab === 'files' && (
-          <div className="tab-content">
-            <h2>Files</h2>
-            
-            <div className="panels-grid">
-              {/* Files List Panel */}
-              <div className="panel files-list-panel">
-                <div className="panel-header">
-                  <h3><FaFile className="panel-icon" /> Files</h3>
-                  <div className="search-container">
-                    <input type="text" placeholder="Search files..." className="search-input" />
-                  </div>
-                </div>
-                <div className="panel-content">
-                  <table className="files-table">
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>Uploaded By</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {files.map(file => (
-                        <tr key={file.id}>
-                          <td>{file.name}</td>
-                          <td>{file.size}</td>
-                          <td>{file.uploadedBy}</td>
-                          <td>{file.date}</td>
-                          <td>
-                            <div className="file-actions">
-                              <button className="action-btn download">Download</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* AI Chat Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaRobot className="panel-icon" /> AI Assistant</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="ai-chat-preview">
-                    <FaRobot className="ai-icon" />
-                    <div className="ai-intro">
-                      <h4>ACSS AI Assistant</h4>
-                      <p>Get help with finding information or answering questions about ACSS activities.</p>
-                      <button
-                        onClick={launchReactAiApp}
-                        className="chat-btn">Start Chat</button>
-                    </div>
-                  </div>
-                  {aiError && <p className="error-message">{aiError}</p>}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
+        {/* Dynamic Content */}
+        <div className="content-area">
+          {activeTab === 'home' && 
+            <HomeComponent 
+              orgDescription={orgDescription}
+              announcement={announcement}
+              birthdayCelebrants={birthdayCelebrants}
+              meetingLinks={meetingLinks}
+            />
+          }
+          {activeTab === 'files' && 
+            <FilesComponent 
+              files={files} 
+              launchReactAiApp={launchReactAiApp} 
+              aiError={aiError} 
+            />
+          }
+        </div>
       </div>
     </div>
   );
@@ -333,8 +535,6 @@ const AcssStudent = () => {
     <Router>
       <Routes>
         <Route path="/" element={<AcssStudentContent />} />
-        {/* You might want to add a dedicated route for the AI assistant */}
-        {/* <Route path="/ai-assistant" element={<AiAssistant />} /> */}
       </Routes>
     </Router>
   );
