@@ -10,7 +10,7 @@
   --background-color: #f9fafb;
   --card-color: #ffffff;
   --success-color: #22c55e;
-  --info-color: #3b82f6;
+  --info-color: #000000d8;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
   --gray-color: #9ca3af;
@@ -392,21 +392,38 @@ h2 {
   background-color: rgba(34, 197, 94, 0.15);
   color: var(--success-color);
 }
-
-.role-badge.ACSS {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: var(--info-color);
-}
-
-.role-badge.user {
-  background-color: rgba(156, 163, 175, 0.15);
+.role-badge.student {
+  background-color: rgba(6, 78, 201, 0.15);
   color: var(--text-secondary);
 }
-
 .role-badge.admin {
   background-color: rgba(239, 68, 68, 0.15);
   color: var(--danger-color);
 }
+
+
+.role-badge.ACSS {
+  background-color: #746ef07a;
+  color: var(--info-color);
+}
+.role-badge.CSSC {
+  background-color: #0890b270;
+  color: var(--info-color);
+}
+.role-badge.LINKS {
+  background-color: #ca8b046b;
+  color: var(--info-color);
+}
+.role-badge.META {
+  background-color: #be185d59;
+  color: var(--info-color);
+}
+.role-badge.SITES {
+  background-color: #15803c5d;
+  color: var(--info-color);
+}
+
+
 
 /* Enhanced Buttons */
 .edit-btn,

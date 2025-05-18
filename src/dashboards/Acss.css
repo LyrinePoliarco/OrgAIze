@@ -258,23 +258,17 @@
   background-color: #f9f9f9;
   border-radius: var(--border-radius);
   border: 1px solid #e0e0e0;
-  border-left: 4px solid #4f46e5; /* You can change the color as needed */
+  border-left: 4px solid #4f46e5;
 }
 
 .request-info {
- 
-  margin-bottom: 0.55rem; /* space between email and date */
+  margin-bottom: 0.55rem;
 }
 
 .request-date {
   color: #666;
   font-size: 0.9rem;
-   margin-top: 0.55rem
-}
-
-.request-actions {
-  display: flex;
-  gap: 0.5rem; /* space between Accept and Decline buttons */
+  margin-top: 0.55rem;
 }
 
 .join-request-card {
@@ -297,7 +291,7 @@
 .requestor-info {
   display: flex;
   align-items: center;
-   justify-content: space-between;
+  justify-content: space-between;
 }
 
 .requestor-img {
@@ -313,18 +307,12 @@
   font-weight: 600;
   margin-bottom: 0.25rem;
   color: var(--text-dark);
-   justify-content: space-between;
+  justify-content: space-between;
 }
 
 .requestor-info p {
   font-size: 0.875rem;
   color: var(--text-medium);
-}
-
-.request-date {
-  font-size: 0.875rem;
-  color: var(--text-light);
-  
 }
 
 .request-reason {
@@ -349,6 +337,63 @@
 .org-chart-panel {
   grid-column: 1 / -1;
   overflow: hidden;
+}
+
+/* Birthday Panel Styles */
+.celebrant-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.celebrant-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.meeting-link-item {
+  margin-bottom: 10px;
+}
+
+.meeting-link-item input {
+  margin-right: 10px;
+  padding: 4px;
+}
+
+.birthday-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.celebrant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background: #f9f9f9;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.celebrant-item input[type="text"],
+.celebrant-item input[type="date"] {
+  margin-right: 10px;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+}
+
+.panel-actions-inline button {
+  margin-left: 5px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.panel-actions-inline button:hover {
+  color: #007BFF;
 }
 
 /* Responsive Design */
@@ -376,7 +421,7 @@
   .sidebar {
     width: 100%;
     height: auto;
-    position: fixed;
+    position: static;
     flex-direction: row;
     justify-content: space-between;
     padding: 0.75rem;
@@ -726,13 +771,6 @@ body {
   flex: 1;
 }
 
-/* Organization Description Panel */
-.org-description {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .org-image {
   width: 100%;
   max-height: 200px;
@@ -836,4 +874,71 @@ body {
 
 .meeting-link-info a:hover {
   text-decoration: underline;
+}
+
+
+
+
+
+/* Organization Description Editor */
+.org-description {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.description-display {
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  min-height: 150px;
+}
+
+/* Meeting Links Styling */
+.meeting-link-item {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.meeting-link-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.meeting-link-edit {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.meeting-link-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.meeting-link-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.meeting-link-url {
+  word-break: break-all;
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.meeting-link-url:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .meeting-link-edit {
+    grid-template-columns: 1fr;
+  }
 }

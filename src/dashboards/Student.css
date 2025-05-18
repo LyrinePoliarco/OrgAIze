@@ -1487,6 +1487,7 @@ body.dark-theme .toast-close:hover {
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
+   z-index: 500;
 }
 
 

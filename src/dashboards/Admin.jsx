@@ -114,7 +114,7 @@ const AdminContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
-  const [roleOptions] = useState(['executive', 'ACSS', 'META', 'CSSC', 'student', 'admin']);
+  const [roleOptions] = useState(['executive', 'student', 'admin', 'ACSS', 'CSSC','LINKS','META', 'SITES']);
   const [currentUser, setCurrentUser] = useState(null);
   
   const location = useLocation();
