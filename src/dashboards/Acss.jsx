@@ -25,7 +25,11 @@ import {
   FaUnderline, 
   FaAlignLeft, 
   FaAlignCenter, 
-  FaAlignRight 
+  FaAlignRight,
+  FaDownload,
+  FaEye,
+  FaEyeSlash,
+  FaTrash
 } from 'react-icons/fa';
 
 const AcssContent = () => {
@@ -35,6 +39,7 @@ const AcssContent = () => {
   
   // State for user data
   const [userData, setUserData] = useState({});
+  const [userRole, setUserRole] = useState('');
   
   // State for AI error
   const [aiError, setAiError] = useState(null);
@@ -52,6 +57,11 @@ const AcssContent = () => {
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderlined, setIsUnderlined] = useState(false);
   const [textAlign, setTextAlign] = useState('left');
+
+  // Add these states for file handling
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Data states
   const [birthdayCelebrants, setBirthdayCelebrants] = useState([]);
@@ -86,7 +96,9 @@ const AcssContent = () => {
     const storedUserData = localStorage.getItem('userData');
     if (storedUserData) {
       try {
-        setUserData(JSON.parse(storedUserData));
+        const parsedData = JSON.parse(storedUserData);
+        setUserData(parsedData);
+        setUserRole(parsedData.role || 'executive'); // Add this line
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
@@ -155,26 +167,199 @@ const AcssContent = () => {
     if (!organizationId) return;
 
     const fetchFiles = async () => {
-      const { data, error } = await supabase
-        .from("files")
-        .select("id, file_name, file_url, uploaded_by, is_hidden, uploaded_at")
-        .eq("organization_id", organizationId)
-        .order("uploaded_at", { ascending: false });
+  if (!organizationId) return;
 
-      if (data) {
-        const formatted = data.map(file => ({
-          id: file.id,
-          name: file.file_name,
-          size: "N/A",
-          uploadedBy: file.uploaded_by || "Unknown",
-          date: new Date(file.uploaded_at).toLocaleDateString(),
-          isHidden: file.is_hidden
-        }));
-        setFiles(formatted);
-      } else {
-        console.error("File fetch error:", error?.message);
-      }
-    };
+  try {
+    const { data, error } = await supabase
+      .from('files')
+      .select(`
+        id, 
+        file_name, 
+        file_url, 
+        uploaded_by, 
+        is_hidden, 
+        uploaded_at,
+        profiles:uploaded_by(name)
+      `)
+      .eq('organization_id', organizationId)
+      .order('uploaded_at', { ascending: false });
+
+    if (error) {
+      console.error('File fetch error:', error.message);
+      return;
+    }
+
+    const formatted = data.map(file => ({
+      id: file.id,
+      name: file.file_name,
+      url: file.file_url,
+      uploadedBy: file.profiles?.name || "Unknown",
+      date: new Date(file.uploaded_at).toLocaleDateString(),
+      isHidden: file.is_hidden,
+      uploadedById: file.uploaded_by
+    }));
+    
+    setFiles(formatted);
+  } catch (error) {
+    console.error('Error fetching files:', error);
+  }
+};
+
+
+//download
+
+const handleDownload = async (url, fileName) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Download error:', error);
+    alert('Failed to download file. Please try again.');
+  }
+};
+// 2. Improve the file upload handler
+const handleFileUpload = async () => {
+  if (!selectedFile || !organizationId) {
+    alert('Please select a file first');
+    return;
+  }
+
+  setIsUploading(true);
+  setUploadProgress(0);
+
+  try {
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!user) throw new Error('Not authenticated');
+
+    // Generate file path: user_id/org_id/filename
+    const fileExt = selectedFile.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExt}`;
+    const filePath = `${user.id}/${organizationId}/${fileName}`;
+
+    // Upload with progress tracking
+    const { error: uploadError } = await supabase.storage
+      .from('organization-files')
+      .upload(filePath, selectedFile, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: selectedFile.type,
+      });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('organization-files')
+      .getPublicUrl(filePath);
+
+    // Insert file record
+    const { error: dbError } = await supabase
+      .from('files')
+      .insert([{
+        id: uuidv4(),
+        file_name: selectedFile.name,
+        file_url: publicUrl,
+        organization_id: organizationId,
+        uploaded_by: user.id,
+        is_hidden: false,
+        uploaded_at: new Date().toISOString()
+      }]);
+
+    if (dbError) throw dbError;
+
+    // Refresh files list
+    await fetchFiles();
+    setSelectedFile(null);
+    alert('File uploaded successfully!');
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert(`Upload failed: ${error.message}`);
+  } finally {
+    setIsUploading(false);
+  }
+};
+
+
+// 3. Improve the toggle visibility function
+const toggleFileVisibility = async (fileId, currentVisibility) => {
+  if (userRole !== 'executive') {
+    alert('Only executives can change file visibility');
+    return;
+  }
+
+  try {
+    setIsUploading(true);
+    
+    const { error } = await supabase
+      .from('files')
+      .update({ is_hidden: !currentVisibility })
+      .eq('id', fileId);
+
+    if (error) throw error;
+
+    await fetchFiles();
+  } catch (error) {
+    console.error('Error toggling visibility:', error);
+    alert('Failed to update file visibility');
+  } finally {
+    setIsUploading(false);
+  }
+};
+
+// 4. Improve the delete file function
+const handleDeleteFile = async (fileId, fileUrl) => {
+  if (userRole !== 'executive') {
+    alert('Only executives can delete files');
+    return;
+  }
+
+  if (!window.confirm('Are you sure you want to delete this file?')) return;
+
+  try {
+    setIsUploading(true);
+    
+    // Extract path from URL
+    const url = new URL(fileUrl);
+    const filePath = url.pathname.split('/storage/v1/object/public/organization-files/')[1];
+    
+    if (!filePath) {
+      throw new Error('Could not extract file path from URL');
+    }
+
+    // Delete from storage
+    const { error: storageError } = await supabase.storage
+      .from('organization-files')
+      .remove([filePath]);
+
+    if (storageError) throw storageError;
+
+    // Delete from database
+    const { error: dbError } = await supabase
+      .from('files')
+      .delete()
+      .eq('id', fileId);
+
+    if (dbError) throw dbError;
+
+    await fetchFiles();
+    alert('File deleted successfully');
+  } catch (error) {
+    console.error('Delete error:', error);
+    alert(`Failed to delete file: ${error.message}`);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
     const fetchBirthdayCelebrants = async () => {
       const { data, error } = await supabase
@@ -697,6 +882,28 @@ const handleSaveAnnouncement = async () => {
     );
   }
 
+  const handleFileSelect = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) {
+    alert('No file selected');
+    return;
+  }
+
+  // Validate file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('File size exceeds 10MB limit');
+    return;
+  }
+
+  setSelectedFile(file);
+};
+
+
+  const filteredFiles = files.filter(file => 
+  file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  file.uploadedBy.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
   return (
     <div className="acss-dashboard">
       {/* Sidebar */}
@@ -1082,99 +1289,173 @@ const handleSaveAnnouncement = async () => {
         
         {/* Files Tab Content */}
         {activeTab === 'files' && (
-          <div className="tab-content">
-            <h2>Files</h2>
-            
-            <div className="panels-grid">
-              {/* Upload File Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaCloudUploadAlt className="panel-icon" /> Upload File</h3>
+  <div className="tab-content">
+    <h2>Files</h2>
+    
+    <div className="panels-grid">
+      {/* Upload File Panel */}
+      <div className="panel">
+        <div className="panel-header">
+          <h3><FaCloudUploadAlt className="panel-icon" /> Upload File</h3>
+        </div>
+        <div className="panel-content">
+          <div className="upload-area">
+            {selectedFile ? (
+              <div className="file-selected">
+                <p>Selected: {selectedFile.name}</p>
+                <div className="upload-progress">
+                  <button 
+                    onClick={handleFileUpload}
+                    disabled={isUploading}
+                    className="upload-btn"
+                  >
+                    {isUploading ? 'Uploading...' : 'Upload File'}
+                  </button>
+                  {isUploading && (
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
+                    </div>
+                  )}
                 </div>
-                <div className="panel-content">
-                  <div className="upload-area">
-                    <FaCloudUploadAlt className="upload-icon" />
-                    <p>Drag and drop files here or</p>
-                    <button className="upload-btn">Browse Files</button>
-                    <input type="file" className="file-input" hidden />
-                  </div>
-                </div>
+                <button 
+                  className="cancel-btn"
+                  onClick={() => setSelectedFile(null)}
+                  disabled={isUploading}
+                >
+                  Cancel
+                </button>
               </div>
-              
-              {/* Files List Panel */}
-              <div className="panel files-list-panel">
-                <div className="panel-header">
-                  <h3><FaFile className="panel-icon" /> Files</h3>
-                  <div className="search-container">
-                    <input type="text" placeholder="Search files..." className="search-input" />
-                  </div>
-                </div>
-                <div className="panel-content">
-                  <table className="files-table">
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>Uploaded By</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {files.map(file => (
-                        <tr key={file.id}>
-                          <td>{file.name}</td>
-                          <td>{file.size}</td>
-                          <td>{file.uploadedBy}</td>
-                          <td>{file.date}</td>
-                          <td>
-                            <span className={`status ${file.isHidden ? 'hidden' : 'visible'}`}>
-                              {file.isHidden ? 'Hidden' : 'Visible'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="file-actions">
-                              <button className="action-btn download">Download</button>
-                              <button className="action-btn visibility">
-                                {file.isHidden ? 'Show' : 'Hide'}
-                              </button>
-                              <button className="action-btn delete">Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* AI Chat Panel */}
-              <div className="panel">
-                <div className="panel-header">
-                  <h3><FaRobot className="panel-icon" /> AI Assistant</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="ai-chat-preview">
-                    <FaRobot className="ai-icon" />
-                    <div className="ai-intro">
-                      <h4>ACSS AI Assistant</h4>
-                      <p>Get help with organizing files, analyzing data, or answering questions about ACSS activities.</p>
-                      {aiError && <p className="error-message">{aiError}</p>}
-                                            <button
-                                              onClick={launchReactAiApp}
-                                              style={{ marginLeft: 'auto' }} 
-                                              className="chat-btn"
-                                            >
-                                              Start Chat
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
+            ) : (
+              <>
+                <FaCloudUploadAlt className="upload-icon" />
+                <p>Drag and drop files here or</p>
+                <label htmlFor="file-upload" className="upload-btn">
+                  Browse Files
+                </label>
+                <input 
+  type="file" 
+  id="file-upload" 
+  onChange={(e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  }}
+  hidden 
+/>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Files List Panel */}
+      <div className="panel files-list-panel">
+        <div className="panel-header">
+          <h3><FaFile className="panel-icon" /> Files</h3>
+          <div className="search-container">
+            <input 
+              type="text" 
+              placeholder="Search files..." 
+              className="search-input" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="panel-content">
+          {files.length === 0 ? (
+            <div className="no-files-message">
+              <p>No files uploaded yet</p>
+            </div>
+          ) : (
+            <table className="files-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Uploaded By</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFiles.map(file => (
+                  <tr key={file.id}>
+                    <td>{file.name}</td>
+                    <td>{file.uploadedBy}</td>
+                    <td>{file.date}</td>
+                    <td>
+                      <span className={`status ${file.isHidden ? 'hidden' : 'visible'}`}>
+                        {file.isHidden ? 'Hidden' : 'Visible'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="file-actions">
+                        <button 
+                          className="action-btn download" 
+                          onClick={() => handleDownload(file.url, file.name)}
+                          title="Download"
+                        >
+                          <FaDownload />
+                        </button>
+                        {userRole === 'executive' && (
+                          <>
+                            <button 
+                              className={`action-btn visibility ${file.isHidden ? 'show' : 'hide'}`}
+                              onClick={() => toggleFileVisibility(file.id, file.isHidden)}
+                              disabled={isUploading}
+                              title={file.isHidden ? 'Show to students' : 'Hide from students'}
+                            >
+                              {file.isHidden ? <FaEye /> : <FaEyeSlash />}
+                            </button>
+                            <button 
+                              className="action-btn delete"
+                              onClick={() => handleDeleteFile(file.id, file.url)}
+                              disabled={isUploading}
+                              title="Delete"
+                            >
+                              <FaTrash />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+      
+      {/* AI Chat Panel */}
+      <div className="panel">
+        <div className="panel-header">
+          <h3><FaRobot className="panel-icon" /> AI Assistant</h3>
+        </div>
+        <div className="panel-content">
+          <div className="ai-chat-preview">
+            <FaRobot className="ai-icon" />
+            <div className="ai-intro">
+              <h4>ACSS AI Assistant</h4>
+              <p>Get help with organizing files, analyzing data, or answering questions about ACSS activities.</p>
+              {aiError && <p className="error-message">{aiError}</p>}
+              <button
+                onClick={launchReactAiApp}
+                className="chat-btn"
+              >
+                Start Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
                               
                               {/* Member Access Tab Content */}
                               {activeTab === 'members' && (
